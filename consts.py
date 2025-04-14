@@ -31,20 +31,20 @@ ResourceMap = [
         'Wool',
 ]
 
-ResourceColors = {
-        Resource.BRICK: (128,0,0),
-        Resource.LUMBER: (0,51,0),
-        Resource.WOOL: (153,255,153),
-        Resource.GRAIN: (255,204,0),
-        Resource.ORE: (102,102,153),
-        'desert': (153,102,0),
+ResourceColors = { # Changed resource colors to be less fugly  
+        Resource.BRICK: (173,40,49),
+        Resource.LUMBER: (95,145,74),
+        Resource.WOOL: (175,213,130),
+        Resource.GRAIN: (255,203,119),
+        Resource.ORE: (141,153,174),
+        'desert': (239,239,208),
 }
 
-PlayerColors = {
-        1: (255, 0, 0),
-        2: (255, 255, 0),
-        3: (0, 255, 0),
-        4: (0, 0, 255)
+PlayerColors = { # Changed player colors to be less fugly 
+        1: (175, 40, 49),
+        2: (255, 203, 119),
+        3: (175, 213, 130),
+        4: (77, 77, 255)
 }
 
 PLAYER_WIDTH = 150
