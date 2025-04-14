@@ -131,20 +131,6 @@ def main():
             def exchange():
                 return exchanges + [{'label': 'cancel', 'action': lambda: ([], None)}], 'Exhange: '
 
-            def trade():
-                offer =  player.negotiate_trade(screen, board, players)
-                for p in players:
-                    if not p == player and p.can_afford_trade(offer) and p.show_offer(offer, screen, board, players, player):
-                        p.accept(offer, True)
-                        player.accept(offer, False)
-                        break
-                return [], None
-            if player.has_trades():
-                buttons.append({
-                    'label': 'Trade',
-                    'action': trade,
-                })
-
             if exchanges:
                 buttons.append({
                     'label': 'Exchange',
