@@ -28,8 +28,9 @@ class DesertTile(ResourceTile):
         raise NotImplementedError
 
 class Board(object):
-    def __init__(self):
-        self.ports = self._get_ports()
+    def __init__(self, ports_enabled=True):
+        self.ports = self._get_ports() if ports_enabled else []
+        self.ports_enabled = ports_enabled
         self.tiles = self._get_tiles()
         shuffle(self.tiles)
         for i, tile in enumerate(self.tiles):

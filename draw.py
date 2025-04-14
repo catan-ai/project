@@ -70,8 +70,9 @@ def draw_port(screen, port):
 def print_board(screen, board):
     for tile in board.tiles:
         draw_resource_tile(screen, tile)
-    for port in consts.Ports:
-        draw_port(screen, port)
+    if board.ports_enabled:
+        for port in consts.Ports:
+            draw_port(screen, port)
     for settlement in board.settlements:
         draw_settlement(screen, settlement)
     for road in board.roads:
