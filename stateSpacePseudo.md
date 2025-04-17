@@ -112,13 +112,41 @@ List(Actions) getPossibleActions(State):
 
 
 State stateActionTransition(State, Action):
-    # If the Action is deterministic (building anything)
-    if (Action is build road, build city, build settlement):
+    # If the Action is deterministic (building anything or playing a monopoly, year of plenty, or road builder dcard)
+    if (Action is build road, build city, build settlement, play monopoly, year of plenty, or road builder dcard):
         # Assuming that State is a combination of player (including recources and d_cards) and board objects,
         # buildSuccessorState will take the action and update these two objects and return the resulting objects
         successor = buildSuccessorState(State, Action)
+        return successor
+
     if (Action is draw d_card)
-    return State
+        # get all cards in the dcard list for the board
+        available_dcards = board.dcards
+        total_dcards = len(available_dcards)
+
+        num_cards = {
+            "Knight": 0,
+            "Point": 0,
+            "Monopoly": 0,
+            "Road Builder": 0,
+            "Year Of Plenty": 0
+        }
+
+        for card in available_dcards:
+            num_cards[card.label] += 1
+        
+        card_labels = list(num_cards.keys())
+        weights = list(num_cards.values())
+
+        sampled_card = random.choices(card_labels, weights=weights, k=1)[0]
+
+        successor = new state from adding the sampled card to the player's hand
+        return successor
+
+
+    if (Action is play a knight card or place the robber)
+    
+        return successor
 
 Note State buildSuccessorState(State, Action) will simply be a method that will update the board and all players hands based on an action taken. I am not going to write pseudocode for it, but all the functionality should already exist in the code, we just need to leverage the right functions and variables.
 
