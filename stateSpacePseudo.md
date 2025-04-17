@@ -15,6 +15,8 @@ List(Actions) getPossibleActions(State):
     # empty list to collect all possible actions
     list_of_actions = []
 
+    TODO: HANDLE WHAT TO DO WHEN WE HAVE A 7 DICE ROLL AND NEED TO DEAL WITH THE ROBBER
+
     # Use get_possible_purchases to get an idea of what purchases are available (road, city, settlement, dcard)
     possible_purchases = get_possible_purchases(player, board, players)
 
@@ -55,7 +57,7 @@ List(Actions) getPossibleActions(State):
     
     for card in unique_player_dcards:
         if card.label = "Knight"
-
+            TODO: IMPLEMENT ROBBER ACTIONS
         # Monopoly cards let you take all resources of a certain kind from all players
         if card.label = "Monopoly"
             # possible Monopoly actions are to select one of the four resource types to take
@@ -145,8 +147,14 @@ State stateActionTransition(State, Action):
 
 
     if (Action is play a knight card or place the robber)
-    
+        TODO: IMPLEMENT ROBBER STATE ACTION TRANSITION
         return successor
+
+    if action is end turn:
+        # for end turn, we have to consider the next state stochastically because of the options of other players
+        # TODO: HOW DO WE HANDLE THIS
+        num_players = len(players)
+        
 
 Note State buildSuccessorState(State, Action) will simply be a method that will update the board and all players hands based on an action taken. I am not going to write pseudocode for it, but all the functionality should already exist in the code, we just need to leverage the right functions and variables.
 
