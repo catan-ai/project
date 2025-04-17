@@ -44,13 +44,51 @@ List(Actions) getPossibleActions(State):
 
         list_of_actions.append(action: buy a development card )
 
+    # Get possible development cards the player has in their hand to play
+    # Note: cards in player.d_cards are valid cards to play (i.e. they were not bought on the current turn)
+    # cards in player.d_cards_queue are cards that were bought this turn so they cannot be played until next turn
+    # point cards cannot be played
+    card_actions = [ (action: play card) for card in player.d_cards if card.label != 'Point'] 
+    
+    # if there are cards to play and the agent has not already played a card this round, add all possible card actions
+    if len(card_actions) > 0 and not aiplayer.played_d_card:
+        list_of_actions.extend(card_actions)
+
+    # Last possible action of every "turn" is to end the turn
+    list_of_actions.append(action: end turn )
+
     return list_of_actions
 
-State getSuccessors(State, Action):
 
-
-    
+State stateActionTransition(State, Action):
+    # If the Action is deterministic (building anything)
+    if (Action is build road, build city, build settlement):
+        # Assuming that State is a combination of player (including recources and d_cards) and board objects,
+        # buildSuccessorState will take the action and update these two objects and return the resulting objects
+        successor = buildSuccessorState(State, Action)
+    if (Action is draw d_card)
     return State
+
+
+
+
+
+State getSuccessors(State):
+    # empty list to collect state action pair
+    state_action = []
+
+    # call get actions to get all possible actions from current state
+
+
+    # get all actions 
+    actions = getPossibleActions(State)
+
+    # Loop through all actions
+    for action in actions:
+        successorState = stateActionTransition(State, action)
+        state_action.append( (successorState, action) )
+
+    return state_action
 
 
     
