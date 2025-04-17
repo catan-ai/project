@@ -48,6 +48,57 @@ List(Actions) getPossibleActions(State):
     # Note: cards in player.d_cards are valid cards to play (i.e. they were not bought on the current turn)
     # cards in player.d_cards_queue are cards that were bought this turn so they cannot be played until next turn
     # point cards cannot be played
+    unique_player_dcards = set()
+    for card in player.d_cards:
+        if card.label != 'Point' and card not in unique_player_dcards:
+            unique_player_dcards.add(card)
+    
+    for card in unique_player_dcards:
+        if card.label = "Knight"
+
+        # Monopoly cards let you take all resources of a certain kind from all players
+        if card.label = "Monopoly"
+            # possible Monopoly actions are to select one of the four resource types to take
+            for resource in consts.ResourceMap
+                card_actions.append(action: Monopoly card for `resource`)
+
+        if card.label = "Road Builder"
+            TODO: Possibly make this more efficient. I was lazy and did it naively
+            # temporary board and aiPlayer to simulate different first road placements
+            temp_board = deepcopy(board)
+            temp_player = deepcopy(aiPlayer)
+            # simulate placing first of two roads
+            roads1 = [(road.start, road.end) for road in board.roads ]
+            for num,pos in consts.RoadMidpoints.items():
+                if pos not in roads1:
+                    road1 = Road(aiPlayer, num)
+                    roads_owned1 = [r for r in board.roads if r.color == aiPlayer.color]
+                    for test_r1 in roads_owned1:
+                        if road.start == test_r1.start or test_r1.end == road.end or road.start == test_r1.end or road.end == test_r1.start:
+                            temp_player.place_road(temp_board)
+                            
+                            
+                            # Now from this point simulate placing a second road
+                            roads2 = [(road.start, road.end) for road in temp_board.roads ]
+                            for num,pos in consts.RoadMidpoints.items():
+                                if pos not in roads2:
+                                    road2 = Road(temp_player, num)
+                                    roads_owned2 = [r for r in board.roads if r.color == temp_player.color]
+                                    for test_r2 in roads_owned2:
+                                        if road.start == test_r2.start or test_r2.end == road.end or road.start == test_r2.end or road.end == test_r2.start:    
+                                            list_of_actions.append(action: place road1 and then road2 )
+
+
+        # Year Of Plenty card lets you get any 2 resources for free
+        if card.label = "Year Of Plenty"
+            # get all possible unique combos of 2 resources
+            resource_combos = list(itertools.combinations_with_replacement(consts.ResourceMap, 2))
+            for combo in resource_combos:
+                card_actions.append(action: Year Of Plenty card to get 2 resources `combo`)
+
+
+
+
     card_actions = [ (action: play card) for card in player.d_cards if card.label != 'Point'] 
     
     # if there are cards to play and the agent has not already played a card this round, add all possible card actions
@@ -69,7 +120,7 @@ State stateActionTransition(State, Action):
     if (Action is draw d_card)
     return State
 
-
+Note State buildSuccessorState(State, Action) will simply be a method that will update the board and all players hands based on an action taken. I am not going to write pseudocode for it, but all the functionality should already exist in the code, we just need to leverage the right functions and variables.
 
 
 
