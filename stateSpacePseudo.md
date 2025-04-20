@@ -13,8 +13,6 @@ List(Actions) getPossibleActions(State):
     # empty list to collect all possible actions
     list_of_actions = []
 
-    TODO: HANDLE WHAT TO DO WHEN WE HAVE A 7 DICE ROLL AND NEED TO DEAL WITH THE ROBBER
-
     # Use get_possible_purchases to get an idea of what purchases are available (road, city, settlement, dcard)
     possible_purchases = get_possible_purchases(player, board, players)
 
@@ -55,7 +53,17 @@ List(Actions) getPossibleActions(State):
     
     for card in unique_player_dcards:
         if card.label = "Knight"
-            TODO: IMPLEMENT ROBBER ACTIONS
+            for num, pos in consts.TilePositions.items():
+                tile = board.tiles[num]
+                if tile.resource is not None and not tile.blocked:
+                    players = []
+                    for settlement in board.settlements:
+                        if settlement.number in settlements_blocking and not settlement.player == self:
+                            players.append(settlement.player)
+                    players = list(set(players))
+                    players_list = sorted(players, key=lambda player: player.number)
+                    for curplayer in players_list:
+                        list_of_actions.append(action: block `tile` and take a resource from `curplayer`)
         # Monopoly cards let you take all resources of a certain kind from all players
         if card.label = "Monopoly"
             # possible Monopoly actions are to select one of the four resource types to take
