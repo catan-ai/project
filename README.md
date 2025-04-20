@@ -4,18 +4,24 @@
         - **Hand**: Dictionary containing each card type (keys) and the associated counts (values)
         - **ID and Color**: Number identifying player and RGB value 
         - **Development Cards**: Queue of *development cards* held by the player, drawn from the board's development card queue 
-        - **Points**: Number of points a player has 
+        - **Points**: Number of victory points a player has 
         - **Settlements Left, Roads Left, Cities Left**: Number of each structure that a player may still build, initialized to `5`, `15`, and `4` 
         - **Longest Road and Largest Army**: Flags set to `True` if player holds either, otherwise `False` 
         - **Knights**: How many *knight cards* (a type of development card) the player has drawn 
-)
+
     - **Board:**
-        - **Resource Tiles**: A `Tile` (class) that has a resource, and a flag for whether it is blocked by a knight (`True`/`False`)
-        - **Desert Tile**: The desert `Tile` where the knight originates, has no resource 
-        - **
-        - Roads: location of each road
-        - Robber: Location (tile) of the robber
-        - VP: List of how many victory points each player has
+        - **Ports**: Dictionary mapping board positions (tile indices) to tuples of `(resource_type, trade_ratio)`
+        - **Tiles**: List of all `Tiles`–18 Resource, 1 Desert–as defined below
+            - **Resource Tiles**: A `Tile` (class) that has a resource, and a flag for whether it is blocked by a knight (`True`/`False`)
+            - **Desert Tile**: The desert `Tile`, where the robber originates, has no resource 
+        - **Settlements**: A list of all placed settlements on the board 
+        - **Roads**: A list of all placed roads on the board
+        - **Development Cards (`d_cards`)**: A shuffled deck of development cards including:
+            - 14 x `Knight` (used to block tiles and potentially earn Largest Army)
+            - 5 x `Point` (grants 1 hidden victory point)
+            - 2 x `Monopoly` (take all of one resource from opponents)
+            - 2 x `RoadBuilder` (place two free roads)
+            - 2 x `YearOfPlenty` (gain any two resources)
 
 - **Actions:**
     - Roll the dice, determining what resource cards you get
