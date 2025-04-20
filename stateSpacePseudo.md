@@ -1,5 +1,3 @@
-
-
 # PseudoCode
 
 Based on this code, the State(object) object will need to contain the following existing classes, or they will need to be passed in as additional parameters to the getPossibleActions function:
@@ -47,7 +45,7 @@ List(Actions) getPossibleActions(State):
     return list_of_actions
 
 State getSuccessors(State, Action):
-
+    
 
     
     return State
