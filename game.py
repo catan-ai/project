@@ -9,6 +9,7 @@ from draw import print_screen
 from dice import Dice
 from player import Player, ComputerPlayer
 import sys
+import argparse
 
 pygame.init()
 
@@ -93,7 +94,13 @@ def get_winner(players):
             return player
 
 def main():
-    board = Board()
+    parser = argparse.ArgumentParser(description="Catan Game")
+    parser.add_argument('--disable-ports', action='store_true', help="Disable ports in the game")
+    args = parser.parse_args()
+
+    ports_enabled = not args.disable_ports
+
+    board = Board(ports_enabled=ports_enabled)  # Pass the flag to the Board class
     dice = Dice()
     players = [ Player(1) ] + [ ComputerPlayer(i) for i in range(2,5) ]
     player_turn = 0
@@ -130,20 +137,6 @@ def main():
             exchanges = player.get_exchanges(screen, board, players)
             def exchange():
                 return exchanges + [{'label': 'cancel', 'action': lambda: ([], None)}], 'Exhange: '
-
-            def trade():
-                offer =  player.negotiate_trade(screen, board, players)
-                for p in players:
-                    if not p == player and p.can_afford_trade(offer) and p.show_offer(offer, screen, board, players, player):
-                        p.accept(offer, True)
-                        player.accept(offer, False)
-                        break
-                return [], None
-            if player.has_trades():
-                buttons.append({
-                    'label': 'Trade',
-                    'action': trade,
-                })
 
             if exchanges:
                 buttons.append({

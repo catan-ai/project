@@ -37,9 +37,10 @@ class DesertTile(ResourceTile):
 # Main board logic
 class Board(object):
     # Initialize the board
-    def __init__(self):
+    def __init__(self, ports_enabled=True):
         # Get the ports and resource tiles
-        self.ports = self._get_ports()
+        self.ports = self._get_ports() if ports_enabled else []
+        self.ports_enabled = ports_enabled
         self.tiles = self._get_tiles()
 
         # Set the location of each resource tile
