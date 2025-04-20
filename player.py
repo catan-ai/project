@@ -8,10 +8,14 @@ import pygame
 import random
 import sys
 
+# Represents a player in the game 
 class Player(object):
     def __init__(self, number):
+        # Player ID and color 
         self.number = number
         self.color = consts.PlayerColors[number]
+
+        # Player resources, initialized to zero 
         self.hand = {
                 consts.Resource.BRICK: 0,
                 consts.Resource.LUMBER: 0,
@@ -19,6 +23,7 @@ class Player(object):
                 consts.Resource.GRAIN: 0,
                 consts.Resource.ORE: 0,
         }
+        # Other player stats, including development cards, roads, settlements, and cities 
         self.d_cards = []
         self.points = 0
         self.settlements_left = 5
@@ -29,29 +34,37 @@ class Player(object):
         self.longest_road = False
         self.largest_army = False
 
+        # Initialize a queue for player development cards
         self.played_d_card = False
         self.d_card_queue = []
 
+    # Add resource to player's hand 
     def take_resource(self, resource):
         self.hand[resource] += 1
 
+    # Start a player turn, reset the development card flag 
     def start_turn(self):
         self.played_d_card = False
 
+    # Play a development card, remove it from the player's hand and set the flag
     def play_d_card(self, card):
         self.d_cards.remove(card)
         self.played_d_card = True
 
+    # End the player's turn, add any queued development cards to the player's hand
     def end_turn(self):
         self.d_cards += self.d_card_queue
         self.d_card_queue = []
 
+    # Check if the player can afford a given item, based on the player's resources 
     def can_afford(self, item):
         for resource in consts.Costs[item]:
             if self.hand[resource] < consts.Costs[item][resource]:
                 return False
         return True
 
+    # Check if the player can buy a given item, based on the game board state 
+    # Different from can_afford, which only checks the player's resources
     def can_buy(self, board, item):
         if item == 'd_card':
             return len(board.d_cards) > 0
@@ -71,15 +84,18 @@ class Player(object):
                         return True
             return False
 
+    # Pick and queue a development card 
     def pick_d_card(self, board):
         card = board.d_cards.pop()
         self.d_card_queue.append(card)
         return card
 
+    # Take resources from the player, based on the item purchased
     def purchase(self, item, board):
         for resource in consts.Costs[item]:
             self.hand[resource] -= consts.Costs[item][resource]
 
+    # UI interaction to place a road on the board 
     def place_road(self, board, settlement=None):
         while True:
             event = pygame.event.wait()
@@ -109,6 +125,7 @@ class Player(object):
                                             board.check_longest_road(self)
                                         return
 
+    # UI Interaction to place a city on the board
     def place_city(self, board):
         while True:
             event = pygame.event.wait()
@@ -123,6 +140,7 @@ class Player(object):
                             settlement.make_city()
                             return
 
+    # Check if a settlement can be placed on the board
     def can_place_settlement(self, board, settlement_number, first):
         settlements = [settlement.number for settlement in board.settlements]
         if settlement_number in settlements:
@@ -143,6 +161,7 @@ class Player(object):
                     return True
         return False
 
+    # UI interaction to place a settlement on the board
     def place_settlement(self, board, first):
         while True:
             event = pygame.event.wait()
@@ -159,6 +178,7 @@ class Player(object):
                             self.points += 1
                             return settlement
 
+    # UI interaction to select an option (e.g. for trading or actions)
     def pick_option(self, options):
         while True:
             event = pygame.event.wait()
@@ -169,6 +189,8 @@ class Player(object):
                     if is_inside(event.pos, option['pos']):
                         return option
 
+    # Select which tyle to block with the robber 
+    # Called in game.py 
     def pick_tile_to_block(self, board):
         while True:
             event = pygame.event.wait()
@@ -191,6 +213,7 @@ class Player(object):
                             players = list(set(players))
                             return sorted(players, key=lambda player: player.number)
 
+    # Steals a random resource from another player (also a function of the robber)
     def give_random_to(self, player):
         cards = [ resource for resource in self.hand for x in range(self.hand[resource]) ]
         if cards:
@@ -198,6 +221,8 @@ class Player(object):
             self.hand[card] -= 1
             player.hand[card] += 1
 
+    # UI interaction for deciding to trade resources, this is just the setup for exchanging resources 
+    # TODO: Comment out if we decide to remove the trade option  
     def make_exchange(self, screen, board, players, resource, amt, first=True):
         def exchange():
             self.hand[resource] += amt
@@ -207,12 +232,16 @@ class Player(object):
             return buttons, 'Trade with: '
         return exchange
 
+    # Check if the player has a port for a given resource
+    # TODO: Comment out if we decide to eliminate ports 
     def has_port(self, ports, resource=None):
         for port in ports:
             if (resource and port[0] == resource) or (resource is None and port[0] == 'any'):
                 return True
         return False
 
+    # UI interaction for trading resources with other players
+    # TODO: Comment out if we decide to remove the trade option
     def negotiate_trade(self, screen, board, players):
         offer = {resource: 0 for resource in self.hand}
         asking = {resource: 0 for resource in self.hand}
@@ -271,6 +300,8 @@ class Player(object):
         }
         return final_offer
 
+    # UI interaction to show the player an offer from another player
+    # TODO: Comment out if we decide to remove the trade option
     def show_offer(self, offer, screen, board, players, from_player):
         resource_labels = {consts.ResourceMap[resource] +' ' + str(offer[resource]) for resource in offer}
 
@@ -289,6 +320,8 @@ class Player(object):
         option = self.pick_option(buttons)
         return option['choice']
 
+    # Accept a trade offer, either adding or removing resources from the player's hand
+    # TODO: Comment out if we decide to remove the trade option
     def accept(self, offer, yours):
         for resource in offer:
             if yours:
@@ -296,6 +329,8 @@ class Player(object):
             else:
                 self.hand[resource] -= offer[resource]
 
+    # Check if the player can afford a trade offer
+    # TODO: Comment out if we decide to remove the trade option
     def can_afford_trade(self, offer):
         for resource in offer:
             needed = offer[resource] * -1
@@ -303,12 +338,16 @@ class Player(object):
                 return False
         return True
 
+    # Check if the player has any resources to trade
+    # TODO: Comment out if we decide to remove the trade option
     def has_trades(self):
         for resource in self.hand:
             if self.hand[resource] > 0:
                 return True
         return False
 
+    # UI interaction to show the player the available exchanges for their resources
+    # TODO: Comment out if we decide to remove the trade option
     def get_exchanges(self, screen, board, players):
         exchanges = []
         settlements = [settlement for settlement in board.settlements if settlement.player == self]
@@ -345,6 +384,8 @@ class Player(object):
     def __hash__(self):
         return hash(self.number)
 
+# Computer player class, inherits from Player
+# Makes random decisions for placing settlements, roads, and cities
 class ComputerPlayer(Player):
     def place_settlement(self, board, first):
         choices = [num for num,pos in consts.SettlementPositions.items() if self.can_place_settlement(board, num, first)]
@@ -355,6 +396,7 @@ class ComputerPlayer(Player):
         self.points += 1
         return settlement
 
+    # UI interaction to place a road on the board
     def place_road(self, board, settlement=None):
         choices = []
         for num,pos in consts.RoadMidpoints.items():
@@ -371,15 +413,18 @@ class ComputerPlayer(Player):
                                 choices.append(road)
                                 break
 
+        # Randomly select a road from the available choices
         road = random.choice(choices)
         board.roads.append(road)
         self.roads_left -= 1
         if self.roads_left <= 15 - 5:
             board.check_longest_road(self)
 
+    # Picks a random move to take 
     def pick_option(self, options):
         return random.choice(options)
 
+    # Randomly blocks tiles when the robber is rolled 
     def pick_tile_to_block(self, board):
         choices = []
         for num, pos in consts.TilePositions.items():
@@ -399,6 +444,7 @@ class ComputerPlayer(Player):
         players = list(set(players))
         return sorted(players, key=lambda player: player.number)
 
+    # Randomly places cities 
     def place_city(self, board):
         choices = [settlement for settlement in board.settlements if settlement.player == self and settlement.city == False]
         settlement = random.choice(choices)
@@ -415,6 +461,7 @@ def is_inside(pos, box):
         return False
     return True
 
+# Settlement class, represents a settlement on the board
 class Settlement(object):
     def __init__(self, player, number):
         self.player = player
@@ -427,6 +474,7 @@ class Settlement(object):
         self.city = True
         self.player.points += 1
 
+# Road class, represents a road on the board
 class Road(object):
     def __init__(self, player, num):
         self.number = num
