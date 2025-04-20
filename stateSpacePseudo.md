@@ -149,9 +149,23 @@ State stateActionTransition(State, Action):
         return successor
 
     if action is end turn:
-        # for end turn, we have to consider the next state stochastically because of the options of other players
-        # TODO: HOW DO WE HANDLE THIS
-        num_players = len(players)
+        # For end turn, we have to consider the next state stochastically because of the options of other players.
+        # We will handle next state by doing a "black box" sample from the environment's state transition function.
+        # This means we will have a function that will take in current state, and generate a possible the next state
+        # by simulating all the computer players action and stopping before our next dice roll
+
+        # empty list that will be populated with board states to sample from 
+        sample_space = []
+        for i in range(1000):
+            sample_space.append(stateTransition_simulation(board, player))
+
+        # random number for sample
+        random_number = random.randint(1000)
+
+        # Return the sample
+        return sample_space[random_number]
+
+
         
 
 Note State buildSuccessorState(State, Action) will simply be a method that will update the board and all players hands based on an action taken. I am not going to write pseudocode for it, but all the functionality should already exist in the code, we just need to leverage the right functions and variables.
