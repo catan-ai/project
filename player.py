@@ -29,7 +29,7 @@ class Player(object):
         self.settlements_left = 5
         self.roads_left = 15
         self.cities_left = 4
-        self.longest_road = 0
+        #self.longest_road = 0 # Don't know why they left this in 
         self.knights = 0
         self.longest_road = False
         self.largest_army = False
