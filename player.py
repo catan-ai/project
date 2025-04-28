@@ -96,7 +96,7 @@ class Player(object):
             self.hand[resource] -= consts.Costs[item][resource]
 
     # UI interaction to place a road on the board 
-    def place_road(self, board, settlement=None):
+    def place_road(self, board, settlement=None, position=None):
         while True:
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
@@ -126,7 +126,7 @@ class Player(object):
                                         return
 
     # UI Interaction to place a city on the board
-    def place_city(self, board):
+    def place_city(self, board, settlement=None):
         while True:
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
@@ -162,7 +162,7 @@ class Player(object):
         return False
 
     # UI interaction to place a settlement on the board
-    def place_settlement(self, board, first):
+    def place_settlement(self, board, first, position=None):
         while True:
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
@@ -191,7 +191,7 @@ class Player(object):
 
     # Select which tyle to block with the robber 
     # Called in game.py 
-    def pick_tile_to_block(self, board):
+    def pick_tile_to_block(self, board, tile=None):
         while True:
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
@@ -387,7 +387,7 @@ class Player(object):
 # Computer player class, inherits from Player
 # Makes random decisions for placing settlements, roads, and cities
 class ComputerPlayer(Player):
-    def place_settlement(self, board, first):
+    def place_settlement(self, board, first, position=None):
         choices = [num for num,pos in consts.SettlementPositions.items() if self.can_place_settlement(board, num, first)]
         choice = random.choice(choices)
         settlement = Settlement(self, choice)
@@ -397,7 +397,7 @@ class ComputerPlayer(Player):
         return settlement
 
     # UI interaction to place a road on the board
-    def place_road(self, board, settlement=None):
+    def place_road(self, board, settlement=None, position=None):
         choices = []
         for num,pos in consts.RoadMidpoints.items():
             if pos not in [(road.start, road.end) for road in board.roads ]:
@@ -425,7 +425,7 @@ class ComputerPlayer(Player):
         return random.choice(options)
 
     # Randomly blocks tiles when the robber is rolled 
-    def pick_tile_to_block(self, board):
+    def pick_tile_to_block(self, board, tile=None):
         choices = []
         for num, pos in consts.TilePositions.items():
             tile = board.tiles[num]
@@ -445,7 +445,7 @@ class ComputerPlayer(Player):
         return sorted(players, key=lambda player: player.number)
 
     # Randomly places cities 
-    def place_city(self, board):
+    def place_city(self, board, settlement=None):
         choices = [settlement for settlement in board.settlements if settlement.player == self and settlement.city == False]
         settlement = random.choice(choices)
         settlement.make_city()

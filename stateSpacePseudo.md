@@ -6,7 +6,7 @@ Based on this code, the State(object) object will need to contain the following 
 - players (this one might be unnecessary, as the get_possible_purchases function only uses this for gui stuff i think)
 
 V2
-```
+```python
 # returns a list of all possible Actions based on current state
 List(Actions) getPossibleActions(State):
 
