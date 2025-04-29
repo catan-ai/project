@@ -28,6 +28,7 @@ class Action():
         place_city
         buy_dcard 
         play_yop 
+        # play_knight 
         play_monopoly
         play_roadbuilder 
         end_turn 
@@ -85,6 +86,26 @@ class Agent(Player):
         
         self.hand[resource1] += 1
         self.hand[resource2] += 1        
+    
+    def play_monopoly(self, board, players, resourceType, card):
+        self.play_d_card(card)
+
+        # Collect all resources of a type from other players 
+        for player in players:
+            if player != self:
+                if resourceType in player.hand and player.hand[resourceType] > 0:
+                    amount_to_take = player.hand[resourceType]
+                    self.hand[resourceType] += amount_to_take
+                    player.hand[resourceType] = 0
+        
+    
+    def play_roadbuilder(self, board, card, settle1, settle2, pos1, pos2):
+        self.play_d_card(card)
+
+        # Allows player to place two free roads 
+        self.place_road(board, settle1, pos1)
+        self.place_road(board, settle2, pos2)
+            
 
     def pick_tile_to_block(self, board, tile):
         num = consts.TilePositions.keys()[-1]
@@ -100,7 +121,8 @@ class Agent(Player):
         players = list(set(players))
         return sorted(players, key=lambda player: player.number)
     
-        
+    def end_turn(self):
+        return super().end_turn() # I think we can just do this 
     
     def getSuccessors(self, state):
         return
@@ -155,6 +177,20 @@ class Agent(Player):
         card_actions = [] 
 
         for card in unique_player_dcards:
+            # if card.label == "Knight":
+            #     for num, pos in consts.TilePositions.items():
+            #         tile = board.tiles[num]
+            #         if tile.resource is not None and not tile.blocked:
+            #             settlements_blocking = consts.TileSettlementMap[num]
+            #             players = []
+            #             for settlement in board.settlements:
+            #                 if settlement.number in settlements_blocking and not settlement.player == self:
+            #                     players.append(settlement.player)
+            #             players = list(set(players))
+            #             players_list = sorted(players, key=lambda player: player.number)
+            #             for curplayer in players_list:
+            #                 player = deepcopy(self)
+            #                 card_actions.append(Action("play_knight")) # TODO: pass args and function
             # Monopoly cards let you take all resources of a certain kind from all players
             if card.label == "Monopoly":
                 # possible Monopoly actions are to select one of the four resource types to take
@@ -227,9 +263,10 @@ class Agent(Player):
         # Return board, player state AFTER the action 
         return new_board, new_player
     
-    def stateTransitionSimulation(board, player, players):
+    def stateTransitionSimulation(board, player, players, screen):
         new_board = deepcopy(board)
         new_player = deepcopy(player)
+        new_players = deepcopy(players)
 
         player.end_turn()
         player_turn = (player_turn + 1) % 4
@@ -238,12 +275,12 @@ class Agent(Player):
         
         first_turn = False
         winner = None
-        while winner is None and player:
+        while winner is None and player.number != 1:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
-            player = players[player_turn]
-            player.start_turn()
+            comp_player = new_players[player_turn]
+            comp_player.start_turn()
             def get_buttons(total = None):
                 buttons = [
                         {
@@ -251,7 +288,7 @@ class Agent(Player):
                             'action': game.end_turn,
                         }
                 ]
-                possible_purchases = game.get_possible_purchases(player, board, players)
+                possible_purchases = game.get_possible_purchases(comp_player, new_board, new_players)
 
                 def make_purchase():
                     return possible_purchases, 'Buy:'
@@ -261,11 +298,11 @@ class Agent(Player):
                         'label': 'Make Purchase',
                         'action': make_purchase
                     })
-                d_cards = [{'label': card.label, 'action': card.make_action(screen, board, players, player)} for card in player.d_cards if card.label != 'Point'] 
+                d_cards = [{'label': card.label, 'action': card.make_action(screen, new_board, new_players, comp_player)} for card in comp_player.d_cards if card.label != 'Point'] 
                 def play_d_card():
                     return d_cards + [{'label': 'cancel', 'action': lambda: ([], None)}], 'Which Card: '
 
-                exchanges = player.get_exchanges(screen, board, players)
+                exchanges = comp_player.get_exchanges(screen, new_board, new_players)
                 def exchange():
                     return exchanges + [{'label': 'cancel', 'action': lambda: ([], None)}], 'Exhange: '
 
@@ -275,15 +312,15 @@ class Agent(Player):
                         'action': exchange,
                     })
 
-                if d_cards and not player.played_d_card:
+                if d_cards and not comp_player.played_d_card:
                     buttons.append({
                         'label': 'Play D Card',
                         'action': play_d_card
                     })
                 if total:
-                    return buttons, 'Player ' + str(player.number) + ', You Rolled: ' + str(total)
+                    return buttons, 'Player ' + str(comp_player.number) + ', You Rolled: ' + str(total)
                 else:
-                    return buttons, 'Player ' + str(player.number) + ': '
+                    return buttons, 'Player ' + str(comp_player.number) + ': '
 
             def roll_dice():
                 total = sum(dice.roll())
@@ -292,7 +329,7 @@ class Agent(Player):
                         while total == 7:
                             total = sum(dice.roll())
                     else:
-                        for p in players:
+                        for p in new_players:
                             if sum([p.hand[resource] for resource in p.hand]) > 7:
                                 original = sum([p.hand[resource] for resource in p.hand])
                                 needed_left = math.ceil(original / 2)
@@ -303,12 +340,12 @@ class Agent(Player):
                                             'resource': resource,
                                             'label': consts.ResourceMap[resource],
                                     } for resource in resources]
-                                    options = print_screen(screen, board, 'Player ' + str(p.number) + ' Pick a resource to give away', players, buttons)
+                                    options = print_screen(screen, new_board, 'Player ' + str(p.number) + ' Pick a resource to give away', new_players, buttons)
                                     resource_chosen = p.pick_option(buttons)
                                     p.hand[resource_chosen['resource']] -= 1
 
-                        print_screen(screen, board, 'Player ' + str(player.number) + ' rolled a 7. Pick a settlement to Block', players)
-                        players_blocked = player.pick_tile_to_block(board)
+                        print_screen(screen, new_board, 'Player ' + str(comp_player.number) + ' rolled a 7. Pick a settlement to Block', new_players)
+                        players_blocked = comp_player.pick_tile_to_block(new_board)
                         buttons = [
                                 {
                                     'label': 'Player ' + str(player_blocked.number),
@@ -316,11 +353,11 @@ class Agent(Player):
                                 } for player_blocked in players_blocked
                         ]
                         if buttons:
-                            print_screen(screen, board, 'Take a resource from:', players, buttons)
-                            player_chosen = player.pick_option(buttons)
-                            player_chosen['player'].give_random_to(player)
+                            print_screen(screen, new_board, 'Take a resource from:', new_players, buttons)
+                            player_chosen = comp_player.pick_option(buttons)
+                            player_chosen['player'].give_random_to(comp_player)
 
-                game.give_resources(board, total)
+                game.give_resources(new_board, total)
                 return get_buttons(total)
             buttons = [{
                 'label': 'Roll Dice',
@@ -329,7 +366,7 @@ class Agent(Player):
 
             label = 'Player %s\'s Turn' % player.number
             while buttons:
-                print_screen(screen, board, label, players, buttons)
+                print_screen(screen, new_board, label, players, buttons)
                 option = player.pick_option(buttons)
                 buttons, label = option['action']()
                 if not buttons and label != 'end':
@@ -339,7 +376,7 @@ class Agent(Player):
             if player_turn == 0:
                 first_turn = False
             winner = game.get_winner(players)
-        print_screen(screen, board, 'Player ' + str(winner.number) + ' Wins!', players)
+        print_screen(screen, new_board, 'Player ' + str(winner.number) + ' Wins!', players)
         while True:
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
@@ -365,6 +402,7 @@ class Agent(Player):
             total_dcards = len(available_dcards)
 
             num_cards = {
+                # "Knight": 0,
                 "Point": 0,
                 "Monopoly": 0,
                 "Road Builder": 0,
@@ -383,6 +421,10 @@ class Agent(Player):
             return board, player
 
 
+        # elif action.name == "play_knight":
+        #     # TODO: IMPLEMENT ROBBER STATE ACTION TRANSITION
+        #     return board, player
+
         elif action.name == "end_turn":
             # For end turn, we have to consider the next state stochastically because of the options of other players.
             # We will handle next state by doing a "black box" sample from the environment's state transition function.
@@ -393,7 +435,7 @@ class Agent(Player):
             sample_space = []
             for i in range(1000):
                 # TODO: Implement stateTransition_simulation
-                sample_space.append(stateTransitionSimulation(board, player))
+                sample_space.append(self.stateTransitionSimulation(board, player))
 
             # random number for sample
             random_number = random.randint(1000)
