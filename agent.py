@@ -3,11 +3,16 @@ import game
 import player
 import consts
 from board import Board
-from draw import print_screen
 from dice import Dice
 from player import Player, ComputerPlayer, Road, Settlement
 import itertools
 import random
+
+from draw import print_screen
+import pygame
+import math
+import sys
+import argparse
 
 
 # TODO
@@ -23,7 +28,6 @@ class Action():
         place_city
         buy_dcard 
         play_yop 
-        play_knight 
         play_monopoly
         play_roadbuilder 
         end_turn 
@@ -31,11 +35,14 @@ class Action():
     def __init__(self, name, function=None, args=None):
         self.name = name
         self.function = function
-        self.args = args
+        self.args = args # args as a dictionary of arguments to pass to the function
 
     def do_action(self):
         if self.function is not None:
-            self.function(self.args)
+            if self.args is not None:
+                self.function(**self.args)
+            else:
+                self.function()
         else:
             print(f"Action {self.name} has no function assigned to it.")
             return False
@@ -73,6 +80,12 @@ class Agent(Player):
     def place_city(self, board, settlement):        
         settlement.make_city()
 
+    def play_yop(self, board, resource1, resource2, card):
+        self.play_d_card(card)
+        
+        self.hand[resource1] += 1
+        self.hand[resource2] += 1        
+
     def pick_tile_to_block(self, board, tile):
         num = consts.TilePositions.keys()[-1]
 
@@ -86,6 +99,8 @@ class Agent(Player):
                 players.append(settlement.player)
         players = list(set(players))
         return sorted(players, key=lambda player: player.number)
+    
+        
     
     def getSuccessors(self, state):
         return
@@ -103,11 +118,13 @@ class Agent(Player):
             if purchase['label'] == 'city': # If we buy a city, upgrade the settlement
                 for boardSettlement in board.settlements:
                     if boardSettlement.player == self and not boardSettlement.city:
-                        list_of_actions.append(Action("place_city"))
+                        player = deepcopy(self)
+                        list_of_actions.append(Action("place_city", args={"board": board, "player": player, "settlement": boardSettlement}, function=player.place_city))
             if purchase['label'] == 'settlement': # If we buy a settlement, check if we can place a settlement
                 for settlementPos in consts.SettlementPositions:
                     if self.can_place_settlement(board, settlementPos, False):
-                        list_of_actions.append(Action("place_settlement"))
+                        player = deepcopy(self)
+                        list_of_actions.append(Action("place_settlement", args={"board": board, "player": player, "first": False, "position": settlementPos}, function=player.place_settlement))
             if purchase['label'] == 'road':
 
                 # TODO: need to figure out how to establish whether there is a spot to put a road. the get_possible_purchases call above already accounts for whether the player has the resources to build a road, but it does not account for whether there is a spot to put the road (Note: this is probably a very very rare condition where you get "boxed in" by other players roads)
@@ -120,11 +137,11 @@ class Agent(Player):
                         for test_r in roads_owned:
                             if road.start == test_r.start or test_r.end == road.end or road.start == test_r.end or road.end == test_r.start:
                                 # action: place a road Road(aiPlayer, num)
-                                list_of_actions.append(Action("place_road") )
+                                player = deepcopy(self)
+                                list_of_actions.append(Action("place_road", args={"board": board, "player": player, "settlement": None, "position": road}, function=player.place_road))
             if purchase['label'] == 'd_card' and len(board.d_cards) > 0:
-                list_of_actions.append(Action("buy_dcard") )
-
-            list_of_actions.append(Action("buy_dcard"))
+                player = deepcopy(self)
+                list_of_actions.append(Action("buy_dcard", args={"board": board}, function=player.pick_d_card))
 
         # Get possible development cards the player has in their hand to play
         # Note: cards in player.d_cards are valid cards to play (i.e. they were not bought on the current turn)
@@ -138,24 +155,12 @@ class Agent(Player):
         card_actions = [] 
 
         for card in unique_player_dcards:
-            if card.label == "Knight":
-                for num, pos in consts.TilePositions.items():
-                    tile = board.tiles[num]
-                    if tile.resource is not None and not tile.blocked:
-                        settlements_blocking = consts.TileSettlementMap[num]
-                        players = []
-                        for settlement in board.settlements:
-                            if settlement.number in settlements_blocking and not settlement.player == self:
-                                players.append(settlement.player)
-                        players = list(set(players))
-                        players_list = sorted(players, key=lambda player: player.number)
-                        for curplayer in players_list:
-                            card_actions.append(Action("play_knight"))
             # Monopoly cards let you take all resources of a certain kind from all players
             if card.label == "Monopoly":
                 # possible Monopoly actions are to select one of the four resource types to take
                 for resource in consts.ResourceMap:
-                    card_actions.append(Action("play_monopoly"))
+                    player = deepcopy(self)
+                    card_actions.append(Action("play_monopoly")) # TODO: pass args and function
 
             if card.label == "Road Builder":
                 # TODO: Possibly make this more efficient. I was lazy and did it naively
@@ -181,7 +186,8 @@ class Agent(Player):
                                         roads_owned2 = [r for r in board.roads if r.color == temp_player.color]
                                         for test_r2 in roads_owned2:
                                             if road.start == test_r2.start or test_r2.end == road.end or road.start == test_r2.end or road.end == test_r2.start:    
-                                                card_actions.append(Action("roadbuilder"))
+                                                player = deepcopy(self)
+                                                card_actions.append(Action("roadbuilder")) # TODO: pass args and function
 
 
             # Year Of Plenty card lets you get any 2 resources for free
@@ -189,14 +195,16 @@ class Agent(Player):
                 # get all possible unique combos of 2 resources
                 resource_combos = list(itertools.combinations_with_replacement(consts.ResourceMap, 2))
                 for combo in resource_combos:
-                    card_actions.append(Action("play_yop"))
+                    player = deepcopy(self)
+                    card_actions.append(Action("play_yop", args={"resource1": combo[0], "resource2": combo[1], "card": card}, function=player.play_yop))
 
         # if there are cards to play and the agent has not already played a card this round, add all possible card actions
         if len(card_actions) > 0 and not self.played_d_card:
             list_of_actions.extend(card_actions)
 
         # Last possible action of every "turn" is to end the turn
-        list_of_actions.append(Action(name="end_turn"))
+        player = deepcopy(self)
+        list_of_actions.append(Action("end_turn", function=player.end_turn))
 
         return list_of_actions
     
@@ -206,15 +214,138 @@ class Agent(Player):
         Take in the current board and player state, along with an action, and return the updated board/player state AFTER the action.
         """
 
+        # Copies of the current board and player state so we can modify them 
         new_board = deepcopy(board)
         new_player = deepcopy(player)
 
+        # Arguments associated with the action function 
+        action.args["board"] = new_board
+        action.args["player"] = new_player
+
         action.do_action()  # Will call the function associated with the action 
 
-        # Need to modify the board and player based on action taken 
-        # Is this going to be handled by the action function itself, or do we need to handle it here? 
+        # Return board, player state AFTER the action 
+        return new_board, new_player
+    
+    def stateTransitionSimulation(board, player, players):
+        new_board = deepcopy(board)
+        new_player = deepcopy(player)
+
+        player.end_turn()
+        player_turn = (player_turn + 1) % 4
+        dice = Dice()
         
-        return
+        
+        first_turn = False
+        winner = None
+        while winner is None and player:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+            player = players[player_turn]
+            player.start_turn()
+            def get_buttons(total = None):
+                buttons = [
+                        {
+                            'label': 'End Turn',
+                            'action': game.end_turn,
+                        }
+                ]
+                possible_purchases = game.get_possible_purchases(player, board, players)
+
+                def make_purchase():
+                    return possible_purchases, 'Buy:'
+
+                if len(possible_purchases) > 1:
+                    buttons.append({
+                        'label': 'Make Purchase',
+                        'action': make_purchase
+                    })
+                d_cards = [{'label': card.label, 'action': card.make_action(screen, board, players, player)} for card in player.d_cards if card.label != 'Point'] 
+                def play_d_card():
+                    return d_cards + [{'label': 'cancel', 'action': lambda: ([], None)}], 'Which Card: '
+
+                exchanges = player.get_exchanges(screen, board, players)
+                def exchange():
+                    return exchanges + [{'label': 'cancel', 'action': lambda: ([], None)}], 'Exhange: '
+
+                if exchanges:
+                    buttons.append({
+                        'label': 'Exchange',
+                        'action': exchange,
+                    })
+
+                if d_cards and not player.played_d_card:
+                    buttons.append({
+                        'label': 'Play D Card',
+                        'action': play_d_card
+                    })
+                if total:
+                    return buttons, 'Player ' + str(player.number) + ', You Rolled: ' + str(total)
+                else:
+                    return buttons, 'Player ' + str(player.number) + ': '
+
+            def roll_dice():
+                total = sum(dice.roll())
+                if total == 7:
+                    if first_turn:
+                        while total == 7:
+                            total = sum(dice.roll())
+                    else:
+                        for p in players:
+                            if sum([p.hand[resource] for resource in p.hand]) > 7:
+                                original = sum([p.hand[resource] for resource in p.hand])
+                                needed_left = math.ceil(original / 2)
+                                while sum([p.hand[resource] for resource in p.hand]) > needed_left:
+                                    resources = [resource for resource in p.hand if p.hand[resource]]
+                                    resources = list(set(resources))
+                                    buttons = [{
+                                            'resource': resource,
+                                            'label': consts.ResourceMap[resource],
+                                    } for resource in resources]
+                                    options = print_screen(screen, board, 'Player ' + str(p.number) + ' Pick a resource to give away', players, buttons)
+                                    resource_chosen = p.pick_option(buttons)
+                                    p.hand[resource_chosen['resource']] -= 1
+
+                        print_screen(screen, board, 'Player ' + str(player.number) + ' rolled a 7. Pick a settlement to Block', players)
+                        players_blocked = player.pick_tile_to_block(board)
+                        buttons = [
+                                {
+                                    'label': 'Player ' + str(player_blocked.number),
+                                    'player': player_blocked
+                                } for player_blocked in players_blocked
+                        ]
+                        if buttons:
+                            print_screen(screen, board, 'Take a resource from:', players, buttons)
+                            player_chosen = player.pick_option(buttons)
+                            player_chosen['player'].give_random_to(player)
+
+                game.give_resources(board, total)
+                return get_buttons(total)
+            buttons = [{
+                'label': 'Roll Dice',
+                'action': roll_dice
+            }]
+
+            label = 'Player %s\'s Turn' % player.number
+            while buttons:
+                print_screen(screen, board, label, players, buttons)
+                option = player.pick_option(buttons)
+                buttons, label = option['action']()
+                if not buttons and label != 'end':
+                    buttons, label = get_buttons()
+            player.end_turn()
+            player_turn = (player_turn + 1) % 4
+            if player_turn == 0:
+                first_turn = False
+            winner = game.get_winner(players)
+        print_screen(screen, board, 'Player ' + str(winner.number) + ' Wins!', players)
+        while True:
+            event = pygame.event.wait()
+            if event.type == pygame.QUIT:
+                sys.exit()
+        
+        return (new_board, new_player)
 
 
     # State 
@@ -225,7 +356,7 @@ class Agent(Player):
             # buildSuccessorState will take the action and update these two objects and return the resulting objects
 
             # TODO: Implement buildSuccessorState
-            board, player = buildSuccessorState(board, player, action)
+            board, player = self.buildSuccessorState(board, player, action)
             return board, player
 
         elif (action.name == "buy_dcard"):
@@ -234,7 +365,6 @@ class Agent(Player):
             total_dcards = len(available_dcards)
 
             num_cards = {
-                "Knight": 0,
                 "Point": 0,
                 "Monopoly": 0,
                 "Road Builder": 0,
@@ -253,10 +383,6 @@ class Agent(Player):
             return board, player
 
 
-        elif action.name == "play_knight":
-            # TODO: IMPLEMENT ROBBER STATE ACTION TRANSITION
-            return board, player
-
         elif action.name == "end_turn":
             # For end turn, we have to consider the next state stochastically because of the options of other players.
             # We will handle next state by doing a "black box" sample from the environment's state transition function.
@@ -267,7 +393,7 @@ class Agent(Player):
             sample_space = []
             for i in range(1000):
                 # TODO: Implement stateTransition_simulation
-                sample_space.append(stateTransition_simulation(board, player))
+                sample_space.append(stateTransitionSimulation(board, player))
 
             # random number for sample
             random_number = random.randint(1000)
