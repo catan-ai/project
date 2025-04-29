@@ -199,10 +199,26 @@ class Agent(Player):
         list_of_actions.append(Action(name="end_turn"))
 
         return list_of_actions
+    
+        
+    def buildSuccessorState(self, board, player, action):
+        """
+        Take in the current board and player state, along with an action, and return the updated board/player state AFTER the action.
+        """
+
+        new_board = deepcopy(board)
+        new_player = deepcopy(player)
+
+        action.do_action()  # Will call the function associated with the action 
+
+        # Need to modify the board and player based on action taken 
+        # Is this going to be handled by the action function itself, or do we need to handle it here? 
+        
+        return
 
 
     # State 
-    def stateActionTransition( board, player, action: Action):
+    def stateActionTransition(self, board, player, action: Action):
         # If the Action is deterministic (building anything or playing a monopoly, year of plenty, or road builder dcard)
         if (action.name in ["place_road", "place_city", "place_settlement", "play_monopoly", "play_yop", "play_roadbuilder"]):
             # Assuming that State is a combination of player (including recources and d_cards) and board objects,
