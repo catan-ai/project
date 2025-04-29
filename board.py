@@ -264,6 +264,10 @@ class Monopoly(object):
 
     def make_action(self, screen, board, players, player):
         def action():
+            # Skip if agent
+            if type(player) == consts.Agent:
+                return [], None
+
             player.play_d_card(self)
             buttons = [
                     {
@@ -286,6 +290,10 @@ class RoadBuilder(object):
 
     def make_action(self, screen, board, players, player):
         def action():
+            # Skip if agent
+            if type(player) == consts.Agent:
+                return [], None
+            `
             player.play_d_card(self)
             for i in range(2):
                 print_screen(screen, board, 'Player ' + str(player.number) + ': Place a road', players)
