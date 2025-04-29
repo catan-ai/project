@@ -4,6 +4,7 @@
 import consts
 from random import shuffle
 from draw import print_screen
+import agent
 
 # Represents a resource tile (brick, wool, etc.)
 class ResourceTile(object):
@@ -91,7 +92,7 @@ class Board(object):
     # Return the deck of development cards
     def _get_d_cards(self):
         return (
-                [ Knight() ] * 14
+                [ Knight() ] * 0 # Remove knights
                 + [ Point() ] * 5
                 + [ Monopoly() ] * 2
                 + [ RoadBuilder() ] * 2
@@ -220,6 +221,10 @@ class Knight(object):
 
     def make_action(self, screen, board, players, player):
         def action():
+            # Skip if agent
+            if type(player) == consts.Agent:
+                return [], None
+            
             player.play_d_card(self)
             print_screen(screen, board, 'Player ' + str(player.number) + ': Pick a settlement to Block', players)
             players_blocked = player.pick_tile_to_block(board)
@@ -294,6 +299,10 @@ class YearOfPlenty(object):
 
     def make_action(self, screen, board, players, player):
         def action():
+            # Skip if agent
+            if type(player) is agent.Agent:
+                return [], None
+
             player.play_d_card(self)
             for i in range(2):
                 buttons = [

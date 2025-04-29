@@ -1,6 +1,8 @@
 # From https://github.com/damargulis/catan/
 # Any modifications will be noted via comments and commits
 
+from agent import Agent
+
 SCREEN_SIZE = WIDTH, HEIGHT = 800, 640
 BLACK = (0,0,0)
 WHITE = (255,255,255)
@@ -15,6 +17,8 @@ LINE_WIDTH = 5
 
 ROBBER_SIZE = 10
 ROBBER_COLOR = (0,0,0)
+
+AGENT = Agent()
 
 class Resource(object):
     BRICK = 0
