@@ -18,8 +18,6 @@ LINE_WIDTH = 5
 ROBBER_SIZE = 10
 ROBBER_COLOR = (0,0,0)
 
-AGENT = Agent()
-
 class Resource(object):
     BRICK = 0
     GRAIN = 1

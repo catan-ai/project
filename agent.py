@@ -364,19 +364,19 @@ class Agent(Player):
                 'action': roll_dice
             }]
 
-            label = 'Player %s\'s Turn' % player.number
+            label = 'Player %s\'s Turn' % comp_player.number
             while buttons:
-                print_screen(screen, new_board, label, players, buttons)
-                option = player.pick_option(buttons)
+                print_screen(screen, new_board, label, new_players, buttons)
+                option = comp_player.pick_option(buttons)
                 buttons, label = option['action']()
                 if not buttons and label != 'end':
                     buttons, label = get_buttons()
-            player.end_turn()
+            comp_player.end_turn()
             player_turn = (player_turn + 1) % 4
             if player_turn == 0:
                 first_turn = False
-            winner = game.get_winner(players)
-        print_screen(screen, new_board, 'Player ' + str(winner.number) + ' Wins!', players)
+            winner = game.get_winner(new_players)
+        print_screen(screen, new_board, 'Player ' + str(winner.number) + ' Wins!', new_players)
         while True:
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
