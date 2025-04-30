@@ -145,18 +145,15 @@ class Player(object):
         settlements = [settlement.number for settlement in board.settlements]
         if settlement_number in settlements:
             return False
-        numbers = [settlement.number for settlement in board.settlements ]
         connected_roads = [ road for road in consts.Roads if settlement_number in road ]
         adj = [ road[0] if road[1] == settlement_number else road[1] for road in connected_roads ]
-        combined = set(adj).intersection(set(numbers))
+        combined = set(adj).intersection(set(settlements))
         if len(combined) == 0:
             if first:
                 return True
-            else:
-                pos = consts.SettlementPositions[settlement_number]
             roads = [ road for road in board.roads if road.player == self ]
+            pos = consts.SettlementPositions[settlement_number]
             for road in roads:
-                pos = consts.SettlementPositions[settlement_number]
                 if pos == road.start or pos == road.end:
                     return True
         return False

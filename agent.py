@@ -1,10 +1,9 @@
 from copy import deepcopy
-import game
-import player
+from utils import get_possible_purchases, give_resources, get_winner, end_turn
 import consts
 from board import Board
 from dice import Dice
-from player import Player, ComputerPlayer, Road, Settlement
+from player import Player, Road, Settlement
 import itertools
 import random
 
@@ -12,7 +11,6 @@ from draw import print_screen
 import pygame
 import math
 import sys
-import argparse
 
 
 # TODO
@@ -57,7 +55,10 @@ class Agent(Player):
 
     def place_settlement(self, board, first, position):
         # Find settlement position and ensure they can place settlement
-        choice = [num for num,pos in consts.SettlementPositions.items() if self.can_place_settlement(board, num, first) and pos == position][0]
+        choice = [num for num,pos in consts.SettlementPositions.items() if self.can_place_settlement(board, num, first) and pos == position]
+        if len(choice) == 0:
+            return False
+        choice = choice[0]
 
         # Create settlement object and add to board
         settlement = Settlement(self, choice)
@@ -67,7 +68,9 @@ class Agent(Player):
         return settlement
 
     def place_road(self, board, settlement=None, position=None):
-        board.roads.append(position)
+        # Position is the road number
+        road = Road(self, position)
+        board.roads.append(road)
         self.roads_left -= 1
         if self.roads_left <= 15 - 5:
             board.check_longest_road(self)
@@ -128,7 +131,7 @@ class Agent(Player):
         list_of_actions = []
 
         # Use get_possible_purchases to get an idea of what purchases are available (road, city, settlement, dcard)
-        possible_purchases = game.get_possible_purchases(player, board, players)
+        possible_purchases = get_possible_purchases(player, board, players)
 
         for purchase in possible_purchases:
             if purchase['label'] == 'city': # If we buy a city, upgrade the settlement
@@ -279,10 +282,10 @@ class Agent(Player):
                 buttons = [
                         {
                             'label': 'End Turn',
-                            'action': game.end_turn,
+                            'action': end_turn, # TODO: need to fix this
                         }
                 ]
-                possible_purchases = game.get_possible_purchases(comp_player, new_board, new_players)
+                possible_purchases = get_possible_purchases(comp_player, new_board, new_players)
 
                 def make_purchase():
                     return possible_purchases, 'Buy:'
@@ -351,7 +354,7 @@ class Agent(Player):
                             player_chosen = comp_player.pick_option(buttons)
                             player_chosen['player'].give_random_to(comp_player)
 
-                game.give_resources(new_board, total)
+                give_resources(new_board, total)
                 return get_buttons(total)
             buttons = [{
                 'label': 'Roll Dice',
@@ -369,7 +372,7 @@ class Agent(Player):
             player_turn = (player_turn + 1) % 4
             if player_turn == 0:
                 first_turn = False
-            winner = game.get_winner(new_players)
+            winner = get_winner(new_players)
         print_screen(screen, new_board, 'Player ' + str(winner.number) + ' Wins!', new_players)
         while True:
             event = pygame.event.wait()
