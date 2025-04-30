@@ -1,8 +1,6 @@
 # From https://github.com/damargulis/catan/
 # Any modifications will be noted via comments and commits
 
-from agent import Agent
-
 SCREEN_SIZE = WIDTH, HEIGHT = 800, 640
 BLACK = (0,0,0)
 WHITE = (255,255,255)

@@ -33,22 +33,16 @@ class Action():
         play_roadbuilder 
         end_turn 
     """
-    def __init__(self, name, function=None, args=None):
+    def __init__(self, name, function=None, args={}):
         self.name = name
-        self.function = function
+        self.function = function # function to call when action is taken
         self.args = args # args as a dictionary of arguments to pass to the function
 
     def do_action(self):
         if self.function is not None:
-            if self.args is not None:
-                self.function(**self.args)
-            else:
-                self.function()
+            self.function(**self.args)
         else:
-            print(f"Action {self.name} has no function assigned to it.")
-            return False
-        return True
-
+            raise ValueError("No function to call for action")
 
 class Agent(Player):
     def pick_option(self, options):
@@ -128,7 +122,7 @@ class Agent(Player):
         return
 
     # List(Actions) 
-    def getPossibleActions(self, board):
+    def getPossibleActions(self, board, players):
 
         # empty list to collect all possible actions
         list_of_actions = []
@@ -196,7 +190,7 @@ class Agent(Player):
                 # possible Monopoly actions are to select one of the four resource types to take
                 for resource in consts.ResourceMap:
                     player = deepcopy(self)
-                    card_actions.append(Action("play_monopoly")) # TODO: pass args and function
+                    card_actions.append(Action("play_monopoly", args={"resourceType": resource, "card": card, "players": players}, function=player.play_monopoly))
 
             if card.label == "Road Builder":
                 # TODO: Possibly make this more efficient. I was lazy and did it naively
@@ -223,7 +217,7 @@ class Agent(Player):
                                         for test_r2 in roads_owned2:
                                             if road.start == test_r2.start or test_r2.end == road.end or road.start == test_r2.end or road.end == test_r2.start:    
                                                 player = deepcopy(self)
-                                                card_actions.append(Action("roadbuilder")) # TODO: pass args and function
+                                                card_actions.append(Action("roadbuilder", args={"card": card, "settle1": road1, "settle2": road2, "pos1": road1, "pos2": road2}, function=player.play_roadbuilder)) # TODO: not 100% sure arguments are correct here
 
 
             # Year Of Plenty card lets you get any 2 resources for free
