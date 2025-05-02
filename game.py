@@ -8,8 +8,10 @@ from board import Board
 from draw import print_screen
 from dice import Dice
 from player import Player, ComputerPlayer
+from agent import Agent
 import sys
 import argparse
+from typing import List
 
 pygame.init()
 
@@ -17,7 +19,7 @@ size = consts.SCREEN_SIZE
 black = consts.BLACK
 screen = pygame.display.set_mode(size)
 
-def pick_settlements(players, board):
+def pick_settlements(players: List[Player], board: Board):
     def draft_round(players, board, second):
         for i, player in enumerate(players):
             text = 'Player ' + str(player.number) + ': Pick a spot to settle'
@@ -102,7 +104,7 @@ def main():
 
     board = Board(ports_enabled=ports_enabled)  # Pass the flag to the Board class
     dice = Dice()
-    players = [ Player(1) ] + [ ComputerPlayer(i) for i in range(2,5) ]
+    players = [ Agent(1) ] + [ ComputerPlayer(i) for i in range(2,5) ]
     player_turn = 0
     pick_settlements(players, board)
     first_turn = True
@@ -156,38 +158,38 @@ def main():
 
         def roll_dice():
             total = sum(dice.roll())
-            if total == 7:
-                if first_turn:
-                    while total == 7:
-                        total = sum(dice.roll())
-                else:
-                    for p in players:
-                        if sum([p.hand[resource] for resource in p.hand]) > 7:
-                            original = sum([p.hand[resource] for resource in p.hand])
-                            needed_left = math.ceil(original / 2)
-                            while sum([p.hand[resource] for resource in p.hand]) > needed_left:
-                                resources = [resource for resource in p.hand if p.hand[resource]]
-                                resources = list(set(resources))
-                                buttons = [{
-                                        'resource': resource,
-                                        'label': consts.ResourceMap[resource],
-                                } for resource in resources]
-                                options = print_screen(screen, board, 'Player ' + str(p.number) + ' Pick a resource to give away', players, buttons)
-                                resource_chosen = p.pick_option(buttons)
-                                p.hand[resource_chosen['resource']] -= 1
+            # if total == 7:
+            #     if first_turn:
+            #         while total == 7:
+            #             total = sum(dice.roll())
+            #     else:
+            #         for p in players:
+            #             if sum([p.hand[resource] for resource in p.hand]) > 7:
+            #                 original = sum([p.hand[resource] for resource in p.hand])
+            #                 needed_left = math.ceil(original / 2)
+            #                 while sum([p.hand[resource] for resource in p.hand]) > needed_left:
+            #                     resources = [resource for resource in p.hand if p.hand[resource]]
+            #                     resources = list(set(resources))
+            #                     buttons = [{
+            #                             'resource': resource,
+            #                             'label': consts.ResourceMap[resource],
+            #                     } for resource in resources]
+            #                     options = print_screen(screen, board, 'Player ' + str(p.number) + ' Pick a resource to give away', players, buttons)
+            #                     resource_chosen = p.pick_option(buttons)
+            #                     p.hand[resource_chosen['resource']] -= 1
 
-                    print_screen(screen, board, 'Player ' + str(player.number) + ' rolled a 7. Pick a settlement to Block', players)
-                    players_blocked = player.pick_tile_to_block(board)
-                    buttons = [
-                            {
-                                'label': 'Player ' + str(player_blocked.number),
-                                'player': player_blocked
-                            } for player_blocked in players_blocked
-                    ]
-                    if buttons:
-                        print_screen(screen, board, 'Take a resource from:', players, buttons)
-                        player_chosen = player.pick_option(buttons)
-                        player_chosen['player'].give_random_to(player)
+            #         print_screen(screen, board, 'Player ' + str(player.number) + ' rolled a 7. Pick a settlement to Block', players)
+            #         players_blocked = player.pick_tile_to_block(board)
+            #         buttons = [
+            #                 {
+            #                     'label': 'Player ' + str(player_blocked.number),
+            #                     'player': player_blocked
+            #                 } for player_blocked in players_blocked
+            #         ]
+            #         if buttons:
+            #             print_screen(screen, board, 'Take a resource from:', players, buttons)
+            #             player_chosen = player.pick_option(buttons)
+            #             player_chosen['player'].give_random_to(player)
 
             give_resources(board, total)
             return get_buttons(total)
@@ -199,7 +201,7 @@ def main():
         label = 'Player %s\'s Turn' % player.number
         while buttons:
             print_screen(screen, board, label, players, buttons)
-            option = player.pick_option(buttons)
+            option = player.pick_option(buttons, board)
             buttons, label = option['action']()
             if not buttons and label != 'end':
                 buttons, label = get_buttons()

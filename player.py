@@ -179,7 +179,7 @@ class Player(object):
                             return settlement
 
     # UI interaction to select an option (e.g. for trading or actions)
-    def pick_option(self, options):
+    def pick_option(self, options, board=None):
         while True:
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
@@ -421,7 +421,7 @@ class ComputerPlayer(Player):
             board.check_longest_road(self)
 
     # Picks a random move to take 
-    def pick_option(self, options):
+    def pick_option(self, options, board=None):
         return random.choice(options)
 
     # Randomly blocks tiles when the robber is rolled 

@@ -49,15 +49,23 @@ class Agent(Player):
         # If only one option, return that option (like roll dice, end turn, etc.)
         if len(options) == 1:
             return options[0]
+        
         # Something about Monte (money) Carlo Tree Search
+
+        # She Monte on my Carlo til I Tree Search 
 
         # Get resource cards, updating hand
         
+        
         # Call getSuccessors from 
 
-    def place_settlement(self, board, first, position):
-        # Find settlement position and ensure they can place settlement
-        choice = [num for num,pos in consts.SettlementPositions.items() if self.can_place_settlement(board, num, first) and pos == position][0]
+    def place_settlement(self, board, first, position=None):
+        if position is None:
+            choices = [num for num,pos in consts.SettlementPositions.items() if self.can_place_settlement(board, num, first)]
+            choice = random.choice(choices)
+        else:
+            # Find settlement position and ensure they can place settlement
+            choice = [num for num,pos in consts.SettlementPositions.items() if self.can_place_settlement(board, num, first) and pos == position][0]
 
         # Create settlement object and add to board
         settlement = Settlement(self, choice)
@@ -67,6 +75,25 @@ class Agent(Player):
         return settlement
 
     def place_road(self, board, settlement=None, position=None):
+        if position is None:
+            choices = []
+            for num,pos in consts.RoadMidpoints.items():
+                if pos not in [(road.start, road.end) for road in board.roads ]:
+                        road = Road(self, num)
+                        if settlement:
+                            if road.start == settlement.position or road.end == settlement.position:
+                                choices.append(road)
+                        else:
+
+                            roads_owned = [r for r in board.roads if r.color == self.color]
+                            for test_r in roads_owned:
+                                if road.start == test_r.start or test_r.end == road.end or road.start == test_r.end or road.end == test_r.start:
+                                    choices.append(road)
+                                    break
+
+            # Randomly select a road from the available choices
+            road = random.choice(choices)
+
         board.roads.append(position)
         self.roads_left -= 1
         if self.roads_left <= 15 - 5:
@@ -409,8 +436,15 @@ class Agent(Player):
             card_labels = list(num_cards.keys())
             weights = list(num_cards.values())
 
-            sampled_card = random.choices(card_labels, weights=weights, k=1)[0]
+            sampled_label = random.choices(card_labels, weights=weights, k=1)[0]
 
+            # Find and remove the first matching card with that label
+            for i, card in enumerate(board.dcards):
+                if card.label == sampled_label:
+                    sampled_card = board.dcards.pop(i)  # remove and retrieve it
+                    break
+
+            player.d_card_queue.append(sampled_card)
             board, player = None # new state from adding the sampled card to the player's hand
             return board, player
 
