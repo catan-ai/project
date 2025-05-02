@@ -9,20 +9,29 @@ title: "Playing Catan with Monte Carlo Tree Search"
 ## Project Motivation 
 Inspired by our love for the classic board game [Settlers of Catan](https://www.catan.com/), our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. With a wide range of actions to choose from each turn, we were motivated to develop an AI agent that makes rational decisions, even in a very large state space. 
 
-## What We Did 
-### Defining State Space 
-We broke down our state space into three main sections, **Player**, **Board**, and **Action**: 
-1. Player
+## Implementation Overview 
+### State Space 
+We broke down our state space into three main sections–Player, Board, and Action–described below: 
 
-2. Board 
+1. **Player**
+    * **Hand**: Dictionary containing each card type (keys) and the associated counts (values)
+    * **ID and Color**: Unique player ID number and their assigned RGB color value 
+    * **Development Cards**: Queue of *development cards* held by the player, drawn from the board's development card 
+    * **Points**: Number of Victory Points a player has 
+    * **Settlements Left, Roads Left, Cities Left**: Number of each structure that a player may still build, initialized to `5`, `15`, and `4`, respectively
+    * **Longest Road and Largest Army**: Flags set to True if the player currently holds the respective title; otherwise, False
+2. **Board**
+    * 
 
-3. Action
+3. **Action**
+    *
 
 ### Game Modifications & Assumptions 
 To reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:
-    - Removed player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades
-    - Removed ports, limiting favorable trade ratios thereby reducing strategic flexibility
-    - Assumed the AI agent plays against three random opponents, as defined in the `Pygame` implementation
+
+* Removed player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades
+* Removed ports, limiting favorable trade ratios thereby reducing strategic flexibility
+* Assumed the AI agent plays against three random opponents, as defined in the `Pygame` implementation
 
 ## Results 
 

@@ -115,9 +115,9 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#software-and-hardware-requirements" id="toc-software-and-hardware-requirements" class="nav-link active" data-scroll-target="#software-and-hardware-requirements">Software and Hardware Requirements</a></li>
   <li><a href="#project-motivation" id="toc-project-motivation" class="nav-link" data-scroll-target="#project-motivation">Project Motivation</a></li>
-  <li><a href="#what-we-did" id="toc-what-we-did" class="nav-link" data-scroll-target="#what-we-did">What We Did</a>
+  <li><a href="#implementation-overview" id="toc-implementation-overview" class="nav-link" data-scroll-target="#implementation-overview">Implementation Overview</a>
   <ul class="collapse">
-  <li><a href="#defining-state-space" id="toc-defining-state-space" class="nav-link" data-scroll-target="#defining-state-space">Defining State Space</a></li>
+  <li><a href="#state-space" id="toc-state-space" class="nav-link" data-scroll-target="#state-space">State Space</a></li>
   <li><a href="#game-modifications-assumptions" id="toc-game-modifications-assumptions" class="nav-link" data-scroll-target="#game-modifications-assumptions">Game Modifications &amp; Assumptions</a></li>
   </ul></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
@@ -156,19 +156,39 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="project-motivation">Project Motivation</h2>
 <p>Inspired by our love for the classic board game <a href="https://www.catan.com/">Settlers of Catan</a>, our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. With a wide range of actions to choose from each turn, we were motivated to develop an AI agent that makes rational decisions, even in a very large state space.</p>
 </section>
-<section id="what-we-did" class="level2">
-<h2 class="anchored" data-anchor-id="what-we-did">What We Did</h2>
-<section id="defining-state-space" class="level3">
-<h3 class="anchored" data-anchor-id="defining-state-space">Defining State Space</h3>
-<p>We broke down our state space into three main sections, <strong>Player</strong>, <strong>Board</strong>, and <strong>Action</strong>: 1. Player</p>
-<ol start="2" type="1">
-<li><p>Board</p></li>
-<li><p>Action</p></li>
+<section id="implementation-overview" class="level2">
+<h2 class="anchored" data-anchor-id="implementation-overview">Implementation Overview</h2>
+<section id="state-space" class="level3">
+<h3 class="anchored" data-anchor-id="state-space">State Space</h3>
+<p>We broke down our state space into three main sections–Player, Board, and Action–described below:</p>
+<ol type="1">
+<li><strong>Player</strong>
+<ul>
+<li><strong>Hand</strong>: Dictionary containing each card type (keys) and the associated counts (values)</li>
+<li><strong>ID and Color</strong>: Unique player ID number and their assigned RGB color value</li>
+<li><strong>Development Cards</strong>: Queue of <em>development cards</em> held by the player, drawn from the board’s development card</li>
+<li><strong>Points</strong>: Number of Victory Points a player has</li>
+<li><strong>Settlements Left, Roads Left, Cities Left</strong>: Number of each structure that a player may still build, initialized to <code>5</code>, <code>15</code>, and <code>4</code>, respectively</li>
+<li><strong>Longest Road and Largest Army</strong>: Flags set to True if the player currently holds the respective title; otherwise, False</li>
+</ul></li>
+<li><strong>Board</strong>
+<ul>
+<li></li>
+</ul></li>
+<li><strong>Action</strong>
+<ul>
+<li></li>
+</ul></li>
 </ol>
 </section>
 <section id="game-modifications-assumptions" class="level3">
 <h3 class="anchored" data-anchor-id="game-modifications-assumptions">Game Modifications &amp; Assumptions</h3>
-<p>To reduce game complexity and enable efficient agent training, we made the following modifications and assumptions: - Removed player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades - Removed ports, limiting favorable trade ratios thereby reducing strategic flexibility - Assumed the AI agent plays against three random opponents, as defined in the <code>Pygame</code> implementation</p>
+<p>To reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:</p>
+<ul>
+<li>Removed player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades</li>
+<li>Removed ports, limiting favorable trade ratios thereby reducing strategic flexibility</li>
+<li>Assumed the AI agent plays against three random opponents, as defined in the <code>Pygame</code> implementation</li>
+</ul>
 </section>
 </section>
 <section id="results" class="level2">
