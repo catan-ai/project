@@ -13,6 +13,9 @@ import sys
 import argparse
 from typing import List
 
+from copy import deepcopy
+
+
 pygame.init()
 
 size = consts.SCREEN_SIZE
@@ -122,7 +125,7 @@ def main():
                         'action': end_turn,
                     }
             ]
-            possible_purchases = get_possible_purchases(player, board, players)
+            possible_purchases = get_possible_purchases(player, board, deepcopy(players))
 
             def make_purchase():
                 return possible_purchases, 'Buy:'
@@ -218,3 +221,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

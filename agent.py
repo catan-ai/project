@@ -14,6 +14,22 @@ import math
 import sys
 import argparse
 
+class Node():
+    """A lightweight tree node used only by Agent.mcts()."""
+    __slots__ = ("board", "players", "player_turn",
+                "parent", "action_taken",
+                "children", "visits", "value", "untried_actions") # Use __slots__ to save on memory
+
+    
+    def __init__(self, board, players, parent=None, action_taken=None):
+        self.board = board
+        self.players = players #make sure passed in player is deep copied
+        self.parent = parent # Parent node 
+        self.action_taken = action_taken # action taken to get to this node
+        
+
+
+
 
 # TODO
 # - [ ] Write out testStateSpace.py to simulate 4 to 8 full turns to verify that the state action space functions work as intended
@@ -45,7 +61,12 @@ class Action():
             raise ValueError("No function to call for action")
 
 class Agent(Player):
-    def pick_option(self, options):
+
+    def mcts(board):
+        # TODO fill in MCTS
+        return action
+
+    def pick_option(self, options, board, players):
         # If only one option, return that option (like roll dice, end turn, etc.)
         if len(options) == 1:
             return options[0]
@@ -55,7 +76,7 @@ class Agent(Player):
         # She Monte on my Carlo til I Tree Search 
 
         # Get resource cards, updating hand
-        
+        return self.mcts(board, players)
         
         # Call getSuccessors from 
 
