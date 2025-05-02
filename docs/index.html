@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>docs</title>
+<title>Playing Catan with Monte Carlo Tree Search</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -80,7 +80,7 @@ ul.task-list li input[type="checkbox"] {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">docs</span>
+    <span class="navbar-title">Playing Catan with Monte Carlo Tree Search</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -108,15 +108,29 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#software-and-hardware-requirements" id="toc-software-and-hardware-requirements" class="nav-link active" data-scroll-target="#software-and-hardware-requirements">Software and Hardware Requirements</a></li>
+  <li><a href="#project-motivation" id="toc-project-motivation" class="nav-link" data-scroll-target="#project-motivation">Project Motivation</a></li>
+  <li><a href="#what-we-did" id="toc-what-we-did" class="nav-link" data-scroll-target="#what-we-did">What We Did</a>
+  <ul class="collapse">
+  <li><a href="#defining-state-space" id="toc-defining-state-space" class="nav-link" data-scroll-target="#defining-state-space">Defining State Space</a></li>
+  <li><a href="#game-modifications-assumptions" id="toc-game-modifications-assumptions" class="nav-link" data-scroll-target="#game-modifications-assumptions">Game Modifications &amp; Assumptions</a></li>
+  </ul></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">docs</h1>
+<h1 class="title">Playing Catan with Monte Carlo Tree Search</h1>
 </div>
 
 
@@ -133,10 +147,38 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>This is a Quarto website.</p>
-<p>To learn more about Quarto websites visit <a href="https://quarto.org/docs/websites" class="uri">https://quarto.org/docs/websites</a>.</p>
+<section id="software-and-hardware-requirements" class="level2">
+<h2 class="anchored" data-anchor-id="software-and-hardware-requirements">Software and Hardware Requirements</h2>
+<pre><code>- she monte on my carlo til i tree search 
+- yo mama </code></pre>
+</section>
+<section id="project-motivation" class="level2">
+<h2 class="anchored" data-anchor-id="project-motivation">Project Motivation</h2>
+<p>Inspired by our love for the classic board game <a href="https://www.catan.com/">Settlers of Catan</a>, our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. With a wide range of actions to choose from each turn, we were motivated to develop an AI agent that makes rational decisions, even in a very large state space.</p>
+</section>
+<section id="what-we-did" class="level2">
+<h2 class="anchored" data-anchor-id="what-we-did">What We Did</h2>
+<section id="defining-state-space" class="level3">
+<h3 class="anchored" data-anchor-id="defining-state-space">Defining State Space</h3>
+<p>We broke down our state space into three main sections, <strong>Player</strong>, <strong>Board</strong>, and <strong>Action</strong>: 1. Player</p>
+<ol start="2" type="1">
+<li><p>Board</p></li>
+<li><p>Action</p></li>
+</ol>
+</section>
+<section id="game-modifications-assumptions" class="level3">
+<h3 class="anchored" data-anchor-id="game-modifications-assumptions">Game Modifications &amp; Assumptions</h3>
+<p>To reduce game complexity and enable efficient agent training, we made the following modifications and assumptions: - Removed player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades - Removed ports, limiting favorable trade ratios thereby reducing strategic flexibility - Assumed the AI agent plays against three random opponents, as defined in the <code>Pygame</code> implementation</p>
+</section>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

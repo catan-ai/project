@@ -9,8 +9,43 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "docs",
+    "title": "Playing Catan with Monte Carlo Tree Search",
     "section": "",
-    "text": "This is a Quarto website.\nTo learn more about Quarto websites visit https://quarto.org/docs/websites."
+    "text": "- she monte on my carlo til i tree search \n- yo mama"
+  },
+  {
+    "objectID": "index.html#software-and-hardware-requirements",
+    "href": "index.html#software-and-hardware-requirements",
+    "title": "Playing Catan with Monte Carlo Tree Search",
+    "section": "",
+    "text": "- she monte on my carlo til i tree search \n- yo mama"
+  },
+  {
+    "objectID": "index.html#project-motivation",
+    "href": "index.html#project-motivation",
+    "title": "Playing Catan with Monte Carlo Tree Search",
+    "section": "Project Motivation",
+    "text": "Project Motivation\nInspired by our love for the classic board game Settlers of Catan, our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. With a wide range of actions to choose from each turn, we were motivated to develop an AI agent that makes rational decisions, even in a very large state space."
+  },
+  {
+    "objectID": "index.html#what-we-did",
+    "href": "index.html#what-we-did",
+    "title": "Playing Catan with Monte Carlo Tree Search",
+    "section": "What We Did",
+    "text": "What We Did\n\nDefining State Space\nWe broke down our state space into three main sections, Player, Board, and Action: 1. Player\n\nBoard\nAction\n\n\n\nGame Modifications & Assumptions\nTo reduce game complexity and enable efficient agent training, we made the following modifications and assumptions: - Removed player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades - Removed ports, limiting favorable trade ratios thereby reducing strategic flexibility - Assumed the AI agent plays against three random opponents, as defined in the Pygame implementation"
+  },
+  {
+    "objectID": "index.html#results",
+    "href": "index.html#results",
+    "title": "Playing Catan with Monte Carlo Tree Search",
+    "section": "Results",
+    "text": "Results"
+  },
+  {
+    "objectID": "index.html#references",
+    "href": "index.html#references",
+    "title": "Playing Catan with Monte Carlo Tree Search",
+    "section": "References",
+    "text": "References"
   }
 ]
