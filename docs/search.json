@@ -25,14 +25,14 @@
     "href": "index.html#project-motivation",
     "title": "Playing Catan with Monte Carlo Tree Search",
     "section": "Project Motivation",
-    "text": "Project Motivation\nInspired by our love for the classic board game Settlers of Catan, our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. With a wide range of actions to choose from each turn, we were motivated to develop an AI agent that makes rational decisions, even in a very large state space."
+    "text": "Project Motivation\nInspired by our love for the classic board game Settlers of Catan, our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. Faced with a large and complex state space, we set out to build an AI agent capable of making rational, strategic decisions each turn."
   },
   {
-    "objectID": "index.html#what-we-did",
-    "href": "index.html#what-we-did",
+    "objectID": "index.html#implementation-overview",
+    "href": "index.html#implementation-overview",
     "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "What We Did",
-    "text": "What We Did\n\nState Space\nWe broke down our state space into three main sections: Player, Board, and Action:\n\nPlayer\n\nHand: Dictionary containing each card type (keys) and the associated counts (values)\nID and Color: Number identifying player and RGB value\nDevelopment Cards: Queue of development cards held by the player, drawn from the board’s development card\nPoints: Number of Victory Points a player has\nSettlements Left, Roads Left, Cities Left: Number of each structure that a player may still build, initialized to 5, 15, and 4\nLongest Road and Largest Army: Flags set to True if player holds either, otherwise False\n\nBoard\nAction\n\n\n\nGame Modifications & Assumptions\nTo reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:\n\nRemoved player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades\nRemoved ports, limiting favorable trade ratios thereby reducing strategic flexibility\nAssumed the AI agent plays against three random opponents, as defined in the Pygame implementation"
+    "section": "Implementation Overview",
+    "text": "Implementation Overview\n\nState Space\nWe broke down our state space into three main sections–Player, Board, and Action–described below:\n\nPlayer\n\nHand: Dictionary containing each card type (keys) and the associated counts (values)\nID and Color: Unique player ID number and their assigned RGB color value\nDevelopment Cards: Queue of development cards held by the player, drawn from the board’s development card\nPoints: Number of Victory Points a player has\nSettlements Left, Roads Left, Cities Left: Number of each structure that a player may still build, initialized to 5, 15, and 4, respectively\nLongest Road: Flag set to True if the player currently holds the title; otherwise, False\n\nBoard\n\n\n\nAction\n\n\n\n\n\n\nGame Modifications & Assumptions\nTo reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:\n\nRemoved player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades\nRemoved ports, limiting favorable trade ratios thereby reducing strategic flexibility\nRemoved knights, eliminating the robber mechanic (i.e., no consequence for rolling a 7) and the largest army bonus\nAssumed the AI agent plays against three random opponents, as defined in the Pygame implementation\nPlace the first two roads and settlements randomly among valid options (i.e., stochastic initial moves)"
   },
   {
     "objectID": "index.html#results",
@@ -47,19 +47,5 @@
     "title": "Playing Catan with Monte Carlo Tree Search",
     "section": "References",
     "text": "References"
-  },
-  {
-    "objectID": "index.html#implementation",
-    "href": "index.html#implementation",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "Implementation",
-    "text": "Implementation\n\nState Space\nWe broke down our state space into three main sections: Player, Board, and Action:\n\nPlayer\n\nHand: Dictionary containing each card type (keys) and the associated counts (values)\nID and Color: Number identifying player and RGB value\nDevelopment Cards: Queue of development cards held by the player, drawn from the board’s development card\nPoints: Number of Victory Points a player has\nSettlements Left, Roads Left, Cities Left: Number of each structure that a player may still build, initialized to 5, 15, and 4\nLongest Road and Largest Army: Flags set to True if player holds either, otherwise False\n\nBoard\nAction\n\n\n\nGame Modifications & Assumptions\nTo reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:\n\nRemoved player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades\nRemoved ports, limiting favorable trade ratios thereby reducing strategic flexibility\nAssumed the AI agent plays against three random opponents, as defined in the Pygame implementation"
-  },
-  {
-    "objectID": "index.html#implementation-overview",
-    "href": "index.html#implementation-overview",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "Implementation Overview",
-    "text": "Implementation Overview\n\nState Space\nWe broke down our state space into three main sections–Player, Board, and Action–described below:\n\nPlayer\n\nHand: Dictionary containing each card type (keys) and the associated counts (values)\nID and Color: Unique player ID number and their assigned RGB color value\nDevelopment Cards: Queue of development cards held by the player, drawn from the board’s development card\nPoints: Number of Victory Points a player has\nSettlements Left, Roads Left, Cities Left: Number of each structure that a player may still build, initialized to 5, 15, and 4, respectively\nLongest Road and Largest Army: Flags set to True if the player currently holds the respective title; otherwise, False\n\nBoard\n\n\n\nAction\n\n\n\n\n\n\nGame Modifications & Assumptions\nTo reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:\n\nRemoved player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades\nRemoved ports, limiting favorable trade ratios thereby reducing strategic flexibility\nAssumed the AI agent plays against three random opponents, as defined in the Pygame implementation"
   }
 ]

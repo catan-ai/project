@@ -7,7 +7,7 @@ title: "Playing Catan with Monte Carlo Tree Search"
     - yo mama 
 
 ## Project Motivation 
-Inspired by our love for the classic board game [Settlers of Catan](https://www.catan.com/), our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. With a wide range of actions to choose from each turn, we were motivated to develop an AI agent that makes rational decisions, even in a very large state space. 
+Inspired by our love for the classic board game [Settlers of Catan](https://www.catan.com/), our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. Faced with a large and complex state space, we set out to build an AI agent capable of making rational, strategic decisions each turn.
 
 ## Implementation Overview 
 ### State Space 
@@ -19,7 +19,8 @@ We broke down our state space into three main sections–Player, Board, and Acti
     * **Development Cards**: Queue of *development cards* held by the player, drawn from the board's development card 
     * **Points**: Number of Victory Points a player has 
     * **Settlements Left, Roads Left, Cities Left**: Number of each structure that a player may still build, initialized to `5`, `15`, and `4`, respectively
-    * **Longest Road and Largest Army**: Flags set to True if the player currently holds the respective title; otherwise, False
+    * **Longest Road**: Flag set to True if the player currently holds the title; otherwise, False
+
 2. **Board**
     * 
 
@@ -31,7 +32,9 @@ To reduce game complexity and enable efficient agent training, we made the follo
 
 * Removed player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank trades
 * Removed ports, limiting favorable trade ratios thereby reducing strategic flexibility
+* Removed knights, eliminating the robber mechanic (i.e., no consequence for rolling a 7) and the largest army bonus
 * Assumed the AI agent plays against three random opponents, as defined in the `Pygame` implementation
+* Place the first two roads and settlements randomly among valid options (i.e., stochastic initial moves)
 
 ## Results 
 

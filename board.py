@@ -145,7 +145,6 @@ class Board(object):
                 else:
                     n_settle = consts.Roads[r][0]
                 l = self.dfs(r, s, discovered, n_settle, length + 1, maximum)
-                print('l:', l)
                 if l > maximum:
                     maximum = l
         return max(length, maximum)
@@ -188,7 +187,6 @@ class Board(object):
 
     # Determine if a player qualifies for the longest road VP
     def check_longest_road(self, placing_player):
-        print('checking')
         players = set([road.player for road in self.roads])
         player_scores = [self.check_road_length(player) for player in players]
         best = max(player_scores)
@@ -197,20 +195,14 @@ class Board(object):
         best_players = [player for i,player in enumerate(players) if player_scores[i] == best]
         if len(best_players) > 1:
             return
-        print('best:')
         best_player = best_players[0]
-        print(best_player.number)
         if best_player.longest_road:
-            print('already_has')
             return
         else:
-            print('switching')
             for player in players:
                 if player.longest_road:
-                    print('switched')
                     player.longest_road = False
                     player.points -= 2
-            print('giving')
             best_player.longest_road = True
             best_player.points += 2
 

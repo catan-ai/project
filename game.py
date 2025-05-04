@@ -89,11 +89,11 @@ def main():
             def exchange():
                 return exchanges + [{'label': 'cancel', 'action': lambda: ([], None)}], 'Exhange: '
 
-            if exchanges:
-                buttons.append({
-                    'label': 'Exchange',
-                    'action': exchange,
-                })
+            # if exchanges:
+            #     buttons.append({
+            #         'label': 'Exchange',
+            #         'action': exchange,
+            #     })
 
             if d_cards and not player.played_d_card:
                 buttons.append({
@@ -160,6 +160,7 @@ def main():
             first_turn = False
         winner = get_winner(players)
     print_screen(screen, board, 'Player ' + str(winner.number) + ' Wins!', players)
+    print('Player ' + str(winner.number) + ' Wins!')
     while True:
         event = pygame.event.wait()
         if event.type == pygame.QUIT:

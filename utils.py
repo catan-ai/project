@@ -27,7 +27,7 @@ def get_possible_purchases(player, board, players, screen=None):
                         card = player.pick_d_card(board)
                         buttons = [{'label': 'ok', 'action': end_turn}]
                         print_screen(screen, board, 'You picked a ' + card.label, players, buttons)
-                        player.pick_option(buttons)
+                        player.pick_option(buttons, board, players)
                     return [], None
                 return make_purchase
             can_afford.append({

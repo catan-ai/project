@@ -27,20 +27,101 @@ class Node():
         self.visits = 0
         self.value  = 0.0          # Cumulative reward
 
-        self.untried_actions = self.getPossibleActions(
+        self.untried_actions = self.players[0].getPossibleActions(
                                         self.board, self.players)
 
-        def is_terminal(self) -> bool:
-            return utils.get_winner(self.players) is not None
-
-
-
-
-
+    def is_terminal(self) -> bool:
+        return utils.get_winner(self.players) is not None
+    
+    def calculate_ucb(self, c: float) -> float:
+        """
+        Selection criteria for selecting next node. selects next node based on Upper-Confidence Bound
+        (parent.visits is always ≥ this node's visits)
+        """
+        if self.visits == 0:
+            return float("inf")
+        return (self.value / self.visits) + \
+                c * math.sqrt(math.log(self.parent.visits) / self.visits)
+    
+    def best_child(self, c:float):
+        """
+        Returns the child with maximum UCB  
+        """
         
+        bestchild = None
+        bestchild_val = 0
+        for child in self.children: 
+            if child.calculate_ucb(c) > bestchild_val:
+                bestchild = child
+                bestchild_val = child.calculate_ucb(c)
+        
+        
+        return bestchild 
+    
+    def add_child(self):
+        """
+        Pop one untried action, build successor state, return new node 
+        """
 
+        a = self.untried_actions.pop()
 
+        current_player = self.players[0]
+        print("before stateActionTransition")
+        next_board, next_player = current_player.stateActionTransition(self.board, current_player, self.players, a)
 
+        next_players = deepcopy(self.players)
+        next_players[0] = deepcopy(next_player)
+
+        child = Node(next_board, next_players, self, a)
+
+        self.children.append(child)
+        return child 
+    
+    def simulate(self, depth: int = 10):
+        """
+        Simulate a random playout from this node to a terminal state or depth limit.
+        """
+        board = deepcopy(self.board)
+        players = deepcopy(self.players)
+        player_turn = 0
+        while not self.is_terminal() and (depth := depth - 1) > 0:
+            # Randomly select an action from possible actions
+            actions = self.players[player_turn].getPossibleActions(board, players)
+            action = random.choice(actions)
+
+            # Simulate the action and get the new board and player state
+            board, player = self.players[player_turn].stateActionTransition(self.board, self.players[player_turn], players, action)
+            
+            # Update the player to the "new" player
+            players[player_turn] = player
+            print(depth)
+
+        def calculate_player_points(player_turn):
+            # Calculate the player's points
+            points = players[player_turn].points
+
+            # Check if the player has a longest road
+            if players[player_turn].longest_road:
+                points += 2
+
+            # Check if the player has any development cards
+            for card in players[player_turn].d_cards:
+                if card.label == 'Point':
+                    points += 1
+
+            return points
+
+        # Calculate agent's points
+        points = calculate_player_points(player_turn)
+
+        # Calculate the best other player's points
+        other_player_points = []
+        for i in range(len(players[1:])):
+            other_player_points.append(calculate_player_points(i))
+
+        # Calculate the difference between the agent's points and the best other player's points
+        # Positive value means agent is winning, negative value means agent is losing
+        return points - max(other_player_points)
 
 # TODO
 # - [ ] Write out testStateSpace.py to simulate 4 to 8 full turns to verify that the state action space functions work as intended
@@ -72,25 +153,56 @@ class Action():
             raise ValueError("No function to call for action")
 
 class Agent(Player):
+    def backpropagate(self, result: float, node: Node):
+        while node is not None:
+            node.visits += 1
+            node.value += result
+            node = node.parent
 
     def mcts(self, board, players):
-        # TODO fill in MCTS
-        return
-        return action
+        leaf = Node(board, players)
 
-    def pick_option(self, options, board, players):
+        time_remaining = 10
+        
+        while (time_remaining := time_remaining - 1) > 0:
+            # leaf <-- select(tree)
+            # while not leaf.is_terminal() and len(leaf.untried_actions) == 0:
+            #     # Select the best child node based on UCB
+            #     leaf = leaf.best_child(1.0)
+            # child = leaf.best_child(1.0)
+            if len(leaf.untried_actions) == 0:
+                leaf = leaf.best_child(1.0)
+            print("before expand")
+            # child <-- expand(leaf)
+            if not leaf.is_terminal():
+                leaf = leaf.add_child()
+            print("before simulate")
+            # result <-- simulate(child)
+            result = leaf.simulate()
+            print("before backpropagate")
+            # backpropagate(result, child)
+            self.backpropagate(result, leaf)
+
+            print(time_remaining)
+
+        # return the move (action) in Actions(state) whose node has highest number of playouts (visits)
+        return max(leaf.children, key=lambda child: child.visits).action_taken
+    
+
+    def pick_option(self, options, board, players, simulate=False):
+        if simulate:
+            return random.choice(options)
+
+        print("Options: ", options) 
         # If only one option, return that option (like roll dice, end turn, etc.)
+        print("len:", len(options))
         if len(options) == 1:
             return options[0]
         
-        # Something about Monte (money) Carlo Tree Search
-
         # She Monte on my Carlo til I Tree Search 
-
-        # Get resource cards, updating hand
-        return self.mcts(board, players)
-        
-        # Call getSuccessors from 
+        action = self.mcts(board, players)
+        print("Action:", action)
+        return action
 
     def place_settlement(self, board, first, position=None):
         if position is None:
@@ -134,7 +246,11 @@ class Agent(Player):
         if self.roads_left <= 15 - 5:
             board.check_longest_road(self)
 
-    def place_city(self, board, settlement):        
+    def place_city(self, board, settlement=None):        
+        if settlement is None:
+            # Find a settlement to upgrade to a city
+            choices = [settlement for settlement in board.settlements if settlement.player == self and settlement.city == False]
+            settlement = random.choice(choices)
         settlement.make_city()
 
     def play_yop(self, board, resource1, resource2, card):
@@ -156,6 +272,7 @@ class Agent(Player):
         
     
     def play_roadbuilder(self, board, card, settle1, settle2, pos1, pos2):
+        # Note that pos1 and pos2 are actual Roads, not positions
         self.play_d_card(card)
 
         # Allows player to place two free roads 
@@ -190,19 +307,19 @@ class Agent(Player):
         list_of_actions = []
 
         # Use get_possible_purchases to get an idea of what purchases are available (road, city, settlement, dcard)
-        possible_purchases = utils.get_possible_purchases(player, board, players)
+        possible_purchases = utils.get_possible_purchases(self, board, players)
 
         for purchase in possible_purchases:
             if purchase['label'] == 'city': # If we buy a city, upgrade the settlement
                 for boardSettlement in board.settlements:
                     if boardSettlement.player == self and not boardSettlement.city:
                         player = deepcopy(self)
-                        list_of_actions.append(Action("place_city", args={"board": board, "player": player, "settlement": boardSettlement}, function=player.place_city))
+                        list_of_actions.append(Action("place_city", args={"board": board, "settlement": boardSettlement}, function=player.place_city))
             if purchase['label'] == 'settlement': # If we buy a settlement, check if we can place a settlement
                 for settlementPos in consts.SettlementPositions:
                     if self.can_place_settlement(board, settlementPos, False):
                         player = deepcopy(self)
-                        list_of_actions.append(Action("place_settlement", args={"board": board, "player": player, "first": False, "position": settlementPos}, function=player.place_settlement))
+                        list_of_actions.append(Action("place_settlement", args={"board": board, "first": False, "position": settlementPos}, function=player.place_settlement))
             if purchase['label'] == 'road':
 
                 # TODO: need to figure out how to establish whether there is a spot to put a road. the get_possible_purchases call above already accounts for whether the player has the resources to build a road, but it does not account for whether there is a spot to put the road (Note: this is probably a very very rare condition where you get "boxed in" by other players roads)
@@ -216,7 +333,7 @@ class Agent(Player):
                             if road.start == test_r.start or test_r.end == road.end or road.start == test_r.end or road.end == test_r.start:
                                 # action: place a road Road(aiPlayer, num)
                                 player = deepcopy(self)
-                                list_of_actions.append(Action("place_road", args={"board": board, "player": player, "settlement": None, "position": road}, function=player.place_road))
+                                list_of_actions.append(Action("place_road", args={"board": board, "settlement": None, "position": road}, function=player.place_road))
             if purchase['label'] == 'd_card' and len(board.d_cards) > 0:
                 player = deepcopy(self)
                 list_of_actions.append(Action("buy_dcard", args={"board": board}, function=player.pick_d_card))
@@ -226,7 +343,7 @@ class Agent(Player):
         # cards in player.d_cards_queue are cards that were bought this turn so they cannot be played until next turn
         # point cards cannot be played
         unique_player_dcards = set()
-        for card in player.d_cards:
+        for card in self.d_cards:
             if card.label != 'Point' and card not in unique_player_dcards:
                 unique_player_dcards.add(card)
                 
@@ -279,7 +396,7 @@ class Agent(Player):
                                         for test_r2 in roads_owned2:
                                             if road.start == test_r2.start or test_r2.end == road.end or road.start == test_r2.end or road.end == test_r2.start:    
                                                 player = deepcopy(self)
-                                                card_actions.append(Action("roadbuilder", args={"card": card, "settle1": road1, "settle2": road2, "pos1": road1, "pos2": road2}, function=player.play_roadbuilder)) # TODO: not 100% sure arguments are correct here
+                                                card_actions.append(Action("roadbuilder", args={"card": card, "settle1": road1, "settle2": road2, "pos1": road1, "pos2": road2}, function=player.play_roadbuilder))
 
 
             # Year Of Plenty card lets you get any 2 resources for free
@@ -312,26 +429,29 @@ class Agent(Player):
 
         # Arguments associated with the action function 
         action.args["board"] = new_board
-        action.args["player"] = new_player
+        # action.args["player"] = new_player
 
         action.do_action()  # Will call the function associated with the action 
 
         # Return board, player state AFTER the action 
         return new_board, new_player
     
-    def stateTransitionSimulation(board, player, players, screen):
+    def stateTransitionSimulation(self, board, player, players):
+        size = consts.SCREEN_SIZE
+        screen = pygame.display.set_mode(size)
         new_board = deepcopy(board)
         new_player = deepcopy(player)
         new_players = deepcopy(players)
 
         player.end_turn()
-        player_turn = (player_turn + 1) % 4
+        player_turn = (player.number + 1) % 4
         dice = Dice()
-        
-        
+        print("player_turn", player_turn)
         first_turn = False
         winner = None
-        while winner is None and player.number != 1:
+        while winner is None and player_turn != 0:
+            print("in while player.number", player.number)
+            print("in while player_turn", player_turn)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
@@ -344,7 +464,7 @@ class Agent(Player):
                             'action': utils.end_turn,
                         }
                 ]
-                possible_purchases = utils.get_possible_purchases(comp_player, new_board, new_players)
+                possible_purchases = utils.get_possible_purchases(comp_player, new_board, deepcopy(new_players), screen)
 
                 def make_purchase():
                     return possible_purchases, 'Buy:'
@@ -380,39 +500,6 @@ class Agent(Player):
 
             def roll_dice():
                 total = sum(dice.roll())
-                if total == 7:
-                    if first_turn:
-                        while total == 7:
-                            total = sum(dice.roll())
-                    else:
-                        for p in new_players:
-                            if sum([p.hand[resource] for resource in p.hand]) > 7:
-                                original = sum([p.hand[resource] for resource in p.hand])
-                                needed_left = math.ceil(original / 2)
-                                while sum([p.hand[resource] for resource in p.hand]) > needed_left:
-                                    resources = [resource for resource in p.hand if p.hand[resource]]
-                                    resources = list(set(resources))
-                                    buttons = [{
-                                            'resource': resource,
-                                            'label': consts.ResourceMap[resource],
-                                    } for resource in resources]
-                                    options = print_screen(screen, new_board, 'Player ' + str(p.number) + ' Pick a resource to give away', new_players, buttons)
-                                    resource_chosen = p.pick_option(buttons)
-                                    p.hand[resource_chosen['resource']] -= 1
-
-                        print_screen(screen, new_board, 'Player ' + str(comp_player.number) + ' rolled a 7. Pick a settlement to Block', new_players)
-                        players_blocked = comp_player.pick_tile_to_block(new_board)
-                        buttons = [
-                                {
-                                    'label': 'Player ' + str(player_blocked.number),
-                                    'player': player_blocked
-                                } for player_blocked in players_blocked
-                        ]
-                        if buttons:
-                            print_screen(screen, new_board, 'Take a resource from:', new_players, buttons)
-                            player_chosen = comp_player.pick_option(buttons)
-                            player_chosen['player'].give_random_to(comp_player)
-
                 utils.give_resources(new_board, total)
                 return get_buttons(total)
             buttons = [{
@@ -423,7 +510,7 @@ class Agent(Player):
             label = 'Player %s\'s Turn' % comp_player.number
             while buttons:
                 print_screen(screen, new_board, label, new_players, buttons)
-                option = comp_player.pick_option(buttons)
+                option = comp_player.pick_option(buttons, board, players, True)
                 buttons, label = option['action']()
                 if not buttons and label != 'end':
                     buttons, label = get_buttons()
@@ -432,29 +519,31 @@ class Agent(Player):
             if player_turn == 0:
                 first_turn = False
             winner = utils.get_winner(new_players)
-        print_screen(screen, new_board, 'Player ' + str(winner.number) + ' Wins!', new_players)
-        while True:
-            event = pygame.event.wait()
-            if event.type == pygame.QUIT:
-                sys.exit()
+        # print_screen(screen, new_board, 'Player ' + str(winner.number) + ' Wins!', new_players)
+        # while True:
+        #     event = pygame.event.wait()
+        #     if event.type == pygame.QUIT:
+        #         sys.exit()
         
         return (new_board, new_player)
 
 
     # State 
-    def stateActionTransition(self, board, player, action: Action):
+    def stateActionTransition(self, board, player, players, action: Action):
+        
         # If the Action is deterministic (building anything or playing a monopoly, year of plenty, or road builder dcard)
         if (action.name in ["place_road", "place_city", "place_settlement", "play_monopoly", "play_yop", "play_roadbuilder"]):
             # Assuming that State is a combination of player (including recources and d_cards) and board objects,
             # buildSuccessorState will take the action and update these two objects and return the resulting objects
-
+            print("in stateActionTransition before determistic action")
             # TODO: Implement buildSuccessorState
             board, player = self.buildSuccessorState(board, player, action)
             return board, player
-
+        
         elif (action.name == "buy_dcard"):
+            print("in stateActionTransition before buy dcard action")
             # get all cards in the dcard list for the board
-            available_dcards = board.dcards
+            available_dcards = board.d_cards
             total_dcards = len(available_dcards)
 
             num_cards = {
@@ -474,13 +563,12 @@ class Agent(Player):
             sampled_label = random.choices(card_labels, weights=weights, k=1)[0]
 
             # Find and remove the first matching card with that label
-            for i, card in enumerate(board.dcards):
+            for i, card in enumerate(board.d_cards):
                 if card.label == sampled_label:
-                    sampled_card = board.dcards.pop(i)  # remove and retrieve it
+                    sampled_card = board.d_cards.pop(i)  # remove and retrieve it
                     break
 
             player.d_card_queue.append(sampled_card)
-            board, player = None # new state from adding the sampled card to the player's hand
             return board, player
 
 
@@ -489,6 +577,7 @@ class Agent(Player):
         #     return board, player
 
         elif action.name == "end_turn":
+            print("in stateActionTransition before end turn")
             # For end turn, we have to consider the next state stochastically because of the options of other players.
             # We will handle next state by doing a "black box" sample from the environment's state transition function.
             # This means we will have a function that will take in current state, and generate a possible the next state
@@ -496,12 +585,9 @@ class Agent(Player):
 
             # empty list that will be populated with board states to sample from 
             sample_space = []
-            for i in range(1000):
+            for i in range(1):
                 # TODO: Implement stateTransition_simulation
-                sample_space.append(self.stateTransitionSimulation(board, player))
-
-            # random number for sample
-            random_number = random.randint(1000)
+                sample_space.append(self.stateTransitionSimulation(board, player, players))
 
             # Return the sample
-            return sample_space[random_number]
+            return random.choice(sample_space)
