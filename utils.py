@@ -7,7 +7,7 @@ def end_section():
 def end_turn():
     return [], 'end'
 
-def get_possible_purchases(player, board, players, screen=None):
+def get_possible_purchases(player, board, players, screen=None, cancel=True):
     can_afford = []
     for item in consts.Costs:
         if player.can_afford(item) and player.can_buy(board, item):
@@ -37,7 +37,7 @@ def get_possible_purchases(player, board, players, screen=None):
     can_afford.append({
         'label': 'cancel',
         'action': end_section,
-    })
+    }) if cancel else None
     return can_afford
 
 def give_resources(board, total):

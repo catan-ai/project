@@ -11,6 +11,10 @@ import math
 import sys
 import utils
 
+MCTS_ITERS = 1
+SIMULATE_DEPTH = 1
+NEXT_PLAYER_SIM_ITERS = 1
+
 class Node():
     """A lightweight tree node used only by Agent.mcts()."""
     __slots__ = ("board", "players", "player_turn",
@@ -66,7 +70,6 @@ class Node():
         a = self.untried_actions.pop()
 
         current_player = self.players[0]
-        print("before stateActionTransition")
         next_board, next_player = current_player.stateActionTransition(self.board, current_player, self.players, a)
 
         next_players = deepcopy(self.players)
@@ -77,7 +80,7 @@ class Node():
         self.children.append(child)
         return child 
     
-    def simulate(self, depth: int = 10):
+    def simulate(self, depth: int = SIMULATE_DEPTH):
         """
         Simulate a random playout from this node to a terminal state or depth limit.
         """
@@ -94,7 +97,6 @@ class Node():
             
             # Update the player to the "new" player
             players[player_turn] = player
-            print(depth)
 
         def calculate_player_points(player_turn):
             # Calculate the player's points
@@ -148,9 +150,15 @@ class Action():
 
     def do_action(self):
         if self.function is not None:
-            self.function(**self.args)
+            return self.function(**self.args)
         else:
             raise ValueError("No function to call for action")
+        
+    def __str__(self):
+        return f"Action(name={self.name})"
+    
+    def __repr__(self):
+        return self.__str__()
 
 class Agent(Player):
     def backpropagate(self, result: float, node: Node):
@@ -162,7 +170,7 @@ class Agent(Player):
     def mcts(self, board, players):
         leaf = Node(board, players)
 
-        time_remaining = 10
+        time_remaining = MCTS_ITERS
         
         while (time_remaining := time_remaining - 1) > 0:
             # leaf <-- select(tree)
@@ -172,36 +180,56 @@ class Agent(Player):
             # child = leaf.best_child(1.0)
             if len(leaf.untried_actions) == 0:
                 leaf = leaf.best_child(1.0)
-            print("before expand")
             # child <-- expand(leaf)
             if not leaf.is_terminal():
                 leaf = leaf.add_child()
-            print("before simulate")
             # result <-- simulate(child)
             result = leaf.simulate()
-            print("before backpropagate")
             # backpropagate(result, child)
             self.backpropagate(result, leaf)
-
-            print(time_remaining)
 
         # return the move (action) in Actions(state) whose node has highest number of playouts (visits)
         return max(leaf.children, key=lambda child: child.visits).action_taken
     
+    def play_turn(self, board, players, simulate=False):
+        # Copy the board and players to avoid modifying the original state
+        # board = deepcopy(board)
+        # players = deepcopy(players)
+
+        action = None
+
+        while action is None or action.name != "end_turn":
+            # Get the possible actions for the player
+            possible_actions = self.getPossibleActions(board, players)
+            print("possible_actions", possible_actions) if len(possible_actions) > 1 else None
+
+            # Pick an action from the possible actions
+            action = self.pick_option(possible_actions, board, players, simulate)
+            print("here") if len(possible_actions) > 1 else None
+            # Perform the action
+            action.do_action()
+
+            print("\taction", action) if len(possible_actions) > 1 else None
+
+            # Replace the player in the players list with the updated player
+            for i, player in enumerate(players):
+                if player.number == self.number:
+                    players[i] = self
+                    break
+
+        # Return the board and player state after the action
+        return board, players
 
     def pick_option(self, options, board, players, simulate=False):
         if simulate:
             return random.choice(options)
 
-        print("Options: ", options) 
-        # If only one option, return that option (like roll dice, end turn, etc.)
-        print("len:", len(options))
+        # If only one option, return that option (like end turn, etc.)
         if len(options) == 1:
             return options[0]
         
         # She Monte on my Carlo til I Tree Search 
         action = self.mcts(board, players)
-        print("Action:", action)
         return action
 
     def place_settlement(self, board, first, position=None):
@@ -255,9 +283,16 @@ class Agent(Player):
 
     def play_yop(self, board, resource1, resource2, card):
         self.play_d_card(card)
-        
-        self.hand[resource1] += 1
-        self.hand[resource2] += 1        
+
+        if resource1 in self.hand:
+            self.hand[resource1] += 1
+        else:
+            self.hand[resource1] = 1
+
+        if resource2 in self.hand:
+            self.hand[resource2] += 1
+        else:
+            self.hand[resource2] = 1      
     
     def play_monopoly(self, board, players, resourceType, card):
         self.play_d_card(card)
@@ -302,25 +337,25 @@ class Agent(Player):
 
     # List(Actions) 
     def getPossibleActions(self, board, players):
-
+        player = self
         # empty list to collect all possible actions
         list_of_actions = []
 
         # Use get_possible_purchases to get an idea of what purchases are available (road, city, settlement, dcard)
-        possible_purchases = utils.get_possible_purchases(self, board, players)
+        possible_purchases = utils.get_possible_purchases(self, board, players, cancel=False)
 
         for purchase in possible_purchases:
             if purchase['label'] == 'city': # If we buy a city, upgrade the settlement
                 for boardSettlement in board.settlements:
                     if boardSettlement.player == self and not boardSettlement.city:
-                        player = deepcopy(self)
+                        # player = deepcopy(self)
                         list_of_actions.append(Action("place_city", args={"board": board, "settlement": boardSettlement}, function=player.place_city))
-            if purchase['label'] == 'settlement': # If we buy a settlement, check if we can place a settlement
+            elif purchase['label'] == 'settlement': # If we buy a settlement, check if we can place a settlement
                 for settlementPos in consts.SettlementPositions:
                     if self.can_place_settlement(board, settlementPos, False):
-                        player = deepcopy(self)
+                        # player = deepcopy(self)
                         list_of_actions.append(Action("place_settlement", args={"board": board, "first": False, "position": settlementPos}, function=player.place_settlement))
-            if purchase['label'] == 'road':
+            elif purchase['label'] == 'road':
 
                 # TODO: need to figure out how to establish whether there is a spot to put a road. the get_possible_purchases call above already accounts for whether the player has the resources to build a road, but it does not account for whether there is a spot to put the road (Note: this is probably a very very rare condition where you get "boxed in" by other players roads)
 
@@ -332,46 +367,28 @@ class Agent(Player):
                         for test_r in roads_owned:
                             if road.start == test_r.start or test_r.end == road.end or road.start == test_r.end or road.end == test_r.start:
                                 # action: place a road Road(aiPlayer, num)
-                                player = deepcopy(self)
+                                # player = deepcopy(self)
                                 list_of_actions.append(Action("place_road", args={"board": board, "settlement": None, "position": road}, function=player.place_road))
-            if purchase['label'] == 'd_card' and len(board.d_cards) > 0:
-                player = deepcopy(self)
+            elif purchase['label'] == 'd_card' and len(board.d_cards) > 0:
+                # player = deepcopy(self)
                 list_of_actions.append(Action("buy_dcard", args={"board": board}, function=player.pick_d_card))
 
         # Get possible development cards the player has in their hand to play
         # Note: cards in player.d_cards are valid cards to play (i.e. they were not bought on the current turn)
         # cards in player.d_cards_queue are cards that were bought this turn so they cannot be played until next turn
         # point cards cannot be played
-        unique_player_dcards = set()
-        for card in self.d_cards:
-            if card.label != 'Point' and card not in unique_player_dcards:
-                unique_player_dcards.add(card)
+        unique_player_dcards = set([card for card in self.d_cards if card.label != 'Point'])
                 
         card_actions = [] 
-
         for card in unique_player_dcards:
-            # if card.label == "Knight":
-            #     for num, pos in consts.TilePositions.items():
-            #         tile = board.tiles[num]
-            #         if tile.resource is not None and not tile.blocked:
-            #             settlements_blocking = consts.TileSettlementMap[num]
-            #             players = []
-            #             for settlement in board.settlements:
-            #                 if settlement.number in settlements_blocking and not settlement.player == self:
-            #                     players.append(settlement.player)
-            #             players = list(set(players))
-            #             players_list = sorted(players, key=lambda player: player.number)
-            #             for curplayer in players_list:
-            #                 player = deepcopy(self)
-            #                 card_actions.append(Action("play_knight")) # TODO: pass args and function
             # Monopoly cards let you take all resources of a certain kind from all players
             if card.label == "Monopoly":
                 # possible Monopoly actions are to select one of the four resource types to take
                 for resource in consts.ResourceMap:
-                    player = deepcopy(self)
+                    # player = deepcopy(self)
                     card_actions.append(Action("play_monopoly", args={"resourceType": resource, "card": card, "players": players}, function=player.play_monopoly))
 
-            if card.label == "Road Builder":
+            elif card.label == "Road Builder":
                 # TODO: Possibly make this more efficient. I was lazy and did it naively
                 # temporary board and aiPlayer to simulate different first road placements
                 temp_board = deepcopy(board)
@@ -383,8 +400,8 @@ class Agent(Player):
                         road1 = Road(self, num)
                         roads_owned1 = [r for r in board.roads if r.color == self.color]
                         for test_r1 in roads_owned1:
-                            if road.start == test_r1.start or test_r1.end == road.end or road.start == test_r1.end or road.end == test_r1.start:
-                                temp_player.place_road(temp_board)
+                            if road1.start == test_r1.start or test_r1.end == road1.end or road1.start == test_r1.end or road1.end == test_r1.start:
+                                temp_player.place_road(temp_board, road1, road1)
                                 
                                 
                                 # Now from this point simulate placing a second road
@@ -394,17 +411,17 @@ class Agent(Player):
                                         road2 = Road(temp_player, num)
                                         roads_owned2 = [r for r in board.roads if r.color == temp_player.color]
                                         for test_r2 in roads_owned2:
-                                            if road.start == test_r2.start or test_r2.end == road.end or road.start == test_r2.end or road.end == test_r2.start:    
-                                                player = deepcopy(self)
+                                            if road2.start == test_r2.start or test_r2.end == road2.end or road2.start == test_r2.end or road2.end == test_r2.start:    
+                                                # player = deepcopy(self)
                                                 card_actions.append(Action("roadbuilder", args={"card": card, "settle1": road1, "settle2": road2, "pos1": road1, "pos2": road2}, function=player.play_roadbuilder))
 
 
             # Year Of Plenty card lets you get any 2 resources for free
-            if card.label == "Year Of Plenty":
+            elif card.label == "Year Of Plenty":
                 # get all possible unique combos of 2 resources
                 resource_combos = list(itertools.combinations_with_replacement(consts.ResourceMap, 2))
                 for combo in resource_combos:
-                    player = deepcopy(self)
+                    # player = deepcopy(self)
                     card_actions.append(Action("play_yop", args={"resource1": combo[0], "resource2": combo[1], "card": card}, function=player.play_yop))
 
         # if there are cards to play and the agent has not already played a card this round, add all possible card actions
@@ -412,7 +429,7 @@ class Agent(Player):
             list_of_actions.extend(card_actions)
 
         # Last possible action of every "turn" is to end the turn
-        player = deepcopy(self)
+        # player = deepcopy(self)
         list_of_actions.append(Action("end_turn", function=player.end_turn))
 
         return list_of_actions
@@ -429,7 +446,8 @@ class Agent(Player):
 
         # Arguments associated with the action function 
         action.args["board"] = new_board
-        # action.args["player"] = new_player
+
+        # print(action.name) if action.name != "end_turn" else None
 
         action.do_action()  # Will call the function associated with the action 
 
@@ -446,12 +464,9 @@ class Agent(Player):
         player.end_turn()
         player_turn = (player.number + 1) % 4
         dice = Dice()
-        print("player_turn", player_turn)
         first_turn = False
         winner = None
         while winner is None and player_turn != 0:
-            print("in while player.number", player.number)
-            print("in while player_turn", player_turn)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
@@ -535,13 +550,11 @@ class Agent(Player):
         if (action.name in ["place_road", "place_city", "place_settlement", "play_monopoly", "play_yop", "play_roadbuilder"]):
             # Assuming that State is a combination of player (including recources and d_cards) and board objects,
             # buildSuccessorState will take the action and update these two objects and return the resulting objects
-            print("in stateActionTransition before determistic action")
             # TODO: Implement buildSuccessorState
             board, player = self.buildSuccessorState(board, player, action)
             return board, player
         
         elif (action.name == "buy_dcard"):
-            print("in stateActionTransition before buy dcard action")
             # get all cards in the dcard list for the board
             available_dcards = board.d_cards
             total_dcards = len(available_dcards)
@@ -577,7 +590,6 @@ class Agent(Player):
         #     return board, player
 
         elif action.name == "end_turn":
-            print("in stateActionTransition before end turn")
             # For end turn, we have to consider the next state stochastically because of the options of other players.
             # We will handle next state by doing a "black box" sample from the environment's state transition function.
             # This means we will have a function that will take in current state, and generate a possible the next state
@@ -585,7 +597,7 @@ class Agent(Player):
 
             # empty list that will be populated with board states to sample from 
             sample_space = []
-            for i in range(1):
+            for _ in range(NEXT_PLAYER_SIM_ITERS):
                 # TODO: Implement stateTransition_simulation
                 sample_space.append(self.stateTransitionSimulation(board, player, players))
 

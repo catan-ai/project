@@ -105,55 +105,37 @@ def main():
             else:
                 return buttons, 'Player ' + str(player.number) + ': '
 
-        def roll_dice():
+        # If agent, use the MCTS agent to pick the best action
+        if player_turn == 0:
+            # Roll the dice to get the resources and start the turn
             total = sum(dice.roll())
-            # if total == 7:
-            #     if first_turn:
-            #         while total == 7:
-            #             total = sum(dice.roll())
-            #     else:
-            #         for p in players:
-            #             if sum([p.hand[resource] for resource in p.hand]) > 7:
-            #                 original = sum([p.hand[resource] for resource in p.hand])
-            #                 needed_left = math.ceil(original / 2)
-            #                 while sum([p.hand[resource] for resource in p.hand]) > needed_left:
-            #                     resources = [resource for resource in p.hand if p.hand[resource]]
-            #                     resources = list(set(resources))
-            #                     buttons = [{
-            #                             'resource': resource,
-            #                             'label': consts.ResourceMap[resource],
-            #                     } for resource in resources]
-            #                     options = print_screen(screen, board, 'Player ' + str(p.number) + ' Pick a resource to give away', players, buttons)
-            #                     resource_chosen = p.pick_option(buttons)
-            #                     p.hand[resource_chosen['resource']] -= 1
-
-            #         print_screen(screen, board, 'Player ' + str(player.number) + ' rolled a 7. Pick a settlement to Block', players)
-            #         players_blocked = player.pick_tile_to_block(board)
-            #         buttons = [
-            #                 {
-            #                     'label': 'Player ' + str(player_blocked.number),
-            #                     'player': player_blocked
-            #                 } for player_blocked in players_blocked
-            #         ]
-            #         if buttons:
-            #             print_screen(screen, board, 'Take a resource from:', players, buttons)
-            #             player_chosen = player.pick_option(buttons)
-            #             player_chosen['player'].give_random_to(player)
-
             give_resources(board, total)
-            return get_buttons(total)
-        buttons = [{
-            'label': 'Roll Dice',
-            'action': roll_dice
-         }]
 
-        label = 'Player %s\'s Turn' % player.number
-        while buttons:
-            print_screen(screen, board, label, players, buttons)
-            option = player.pick_option(buttons, board, players)
-            buttons, label = option['action']()
-            if not buttons and label != 'end':
-                buttons, label = get_buttons()
+            # Now, actually use the MCTS agent to play their turn
+            board, players = player.play_turn(board, players, False)
+            player = players[player_turn]
+            label = 'Player %s\'s Turn' % player.number + ', You Rolled: ' + str(total)
+            print_screen(screen, board, label, players)
+        # If other typle of player, do regular turn
+        else:
+
+            def roll_dice():
+                total = sum(dice.roll())
+
+                give_resources(board, total)
+                return get_buttons(total)
+            buttons = [{
+                'label': 'Roll Dice',
+                'action': roll_dice
+            }]
+
+            label = 'Player %s\'s Turn' % player.number
+            while buttons:
+                print_screen(screen, board, label, players, buttons)
+                option = player.pick_option(buttons, board, players)
+                buttons, label = option['action']()
+                if not buttons and label != 'end':
+                    buttons, label = get_buttons()
         player.end_turn()
         player_turn = (player_turn + 1) % 4
         if player_turn == 0:
