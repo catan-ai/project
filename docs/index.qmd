@@ -35,6 +35,8 @@ To reduce game complexity and enable efficient agent training, we made the follo
 * Assumed the AI agent plays against three random opponents, as defined in the original `pygame` implementation, and plays first
 * Place the first two roads and settlements randomly among valid options (i.e., stochastic initial moves)
 
+We modified the pygame we based our agent on. You can see what we changed (primarily in `board.py`, `player.py`, and `game.py`) via [this diff](https://github.com/catan-ai/project/compare/ceeee5f...HEAD) (just ignore anything in `/docs/`).
+
 ### State Space 
 Based on the [Pygame](https://github.com/damargulis/catan/tree/master) implementation of Catan, we broke our state space into three main sections–Player, Board, and Action–described below: 
 
