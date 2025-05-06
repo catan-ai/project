@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import List
 import consts
 from dice import Dice
 from player import Player, Road, Settlement
@@ -11,9 +12,9 @@ import math
 import sys
 import utils
 
-MCTS_ITERS = 1
-SIMULATE_DEPTH = 1
-NEXT_PLAYER_SIM_ITERS = 1
+MCTS_ITERS = 10
+SIMULATE_DEPTH = 2
+NEXT_PLAYER_SIM_ITERS = 2
 
 class Node():
     """A lightweight tree node used only by Agent.mcts()."""
@@ -24,18 +25,30 @@ class Node():
     
     def __init__(self, board, players, parent=None, action_taken=None):
         self.board = board
-        self.players = players #make sure passed in player is deep copied
-        self.parent = parent # Parent node 
-        self.action_taken = action_taken # action taken to get to this node
-        self.children = []
+        self.players: List[Player] = players #make sure passed in player is deep copied
+        self.parent: Node = parent # Parent node 
+        self.action_taken: Action = action_taken # action taken to get to this node
+        self.children: List[Node] = []
         self.visits = 0
         self.value  = 0.0          # Cumulative reward
 
         self.untried_actions = self.players[0].getPossibleActions(
                                         self.board, self.players)
 
+    def __str__(self):
+        return f"Node(board={self.board}, players={self.players}, action_taken={self.action_taken}, visits={self.visits}, value={self.value}, untried_actions={self.untried_actions}, children={len(self.children)})"
+    
+    def __repr__(self):
+        return self.__str__()
+
     def is_terminal(self) -> bool:
         return utils.get_winner(self.players) is not None
+    
+    def is_fully_expanded(self) -> bool:
+        """
+        Check if all possible actions have been tried from this node.
+        """
+        return len(self.untried_actions) == 0
     
     def calculate_ucb(self, c: float) -> float:
         """
@@ -47,13 +60,13 @@ class Node():
         return (self.value / self.visits) + \
                 c * math.sqrt(math.log(self.parent.visits) / self.visits)
     
-    def best_child(self, c:float):
+    def best_child(self, c: float = 1.0):
         """
         Returns the child with maximum UCB  
         """
         
-        bestchild = None
-        bestchild_val = 0
+        bestchild = self.children[0]
+        bestchild_val = float("-inf")
         for child in self.children: 
             if child.calculate_ucb(c) > bestchild_val:
                 bestchild = child
@@ -62,15 +75,18 @@ class Node():
         
         return bestchild 
     
-    def add_child(self):
+    def expand(self):
         """
         Pop one untried action, build successor state, return new node 
         """
 
-        a = self.untried_actions.pop()
+        # Randomly select an action from the untried actions, remove it from the list
+        a = random.choice(self.untried_actions)
+        self.untried_actions.remove(a)
 
-        current_player = self.players[0]
-        next_board, next_player = current_player.stateActionTransition(self.board, current_player, self.players, a)
+        current_player: Agent = self.players[0]
+        print("calling stateActionTransition on action", a)
+        next_board, next_player = current_player.stateActionTransition(deepcopy(self.board), deepcopy(current_player), deepcopy(self.players), a)
 
         next_players = deepcopy(self.players)
         next_players[0] = deepcopy(next_player)
@@ -87,29 +103,27 @@ class Node():
         board = deepcopy(self.board)
         players = deepcopy(self.players)
         player_turn = 0
-        while not self.is_terminal() and (depth := depth - 1) > 0:
+        while not utils.get_winner(players) and (depth := depth - 1) > 0:
             # Randomly select an action from possible actions
-            actions = self.players[player_turn].getPossibleActions(board, players)
+            actions = players[player_turn].getPossibleActions(board, players)
             action = random.choice(actions)
 
             # Simulate the action and get the new board and player state
-            board, player = self.players[player_turn].stateActionTransition(self.board, self.players[player_turn], players, action)
+            board, player = players[player_turn].stateActionTransition(board, players[player_turn], players, action)
             
             # Update the player to the "new" player
             players[player_turn] = player
 
-        def calculate_player_points(player_turn):
+        def calculate_player_points(num):
             # Calculate the player's points
-            points = players[player_turn].points
+            points = players[num].points
 
             # Check if the player has a longest road
-            if players[player_turn].longest_road:
+            if players[num].longest_road:
                 points += 2
 
             # Check if the player has any development cards
-            for card in players[player_turn].d_cards:
-                if card.label == 'Point':
-                    points += 1
+            points += len([card for card in players[num].d_cards if card.label == 'Point'])
 
             return points
 
@@ -117,13 +131,32 @@ class Node():
         points = calculate_player_points(player_turn)
 
         # Calculate the best other player's points
-        other_player_points = []
-        for i in range(len(players[1:])):
-            other_player_points.append(calculate_player_points(i))
+        max_other = max(calculate_player_points(i+1) for i in range(len(players[1:])))
 
         # Calculate the difference between the agent's points and the best other player's points
         # Positive value means agent is winning, negative value means agent is losing
-        return points - max(other_player_points)
+        return points - max_other
+
+    def select(self):
+        """
+        Select a node from the tree using UCB.
+        """
+        # Traverse the tree until we reach a leaf node
+        current_node = self
+        while not current_node.is_terminal():
+            if not current_node.is_fully_expanded():
+                return current_node.expand()
+            else:
+                current_node = current_node.best_child()
+        return current_node
+    
+    def print_tree(self, depth=0):
+        """
+        Print the tree for debugging purposes, starting from this node.
+        """
+        print("\t" * depth + str(self))
+        for child in self.children:
+            child.print_tree(depth + 1)
 
 # TODO
 # - [ ] Write out testStateSpace.py to simulate 4 to 8 full turns to verify that the state action space functions work as intended
@@ -141,6 +174,7 @@ class Action():
         # play_knight 
         play_monopoly
         play_roadbuilder 
+        make_exchange
         end_turn 
     """
     def __init__(self, name, function=None, args={}):
@@ -168,28 +202,23 @@ class Agent(Player):
             node = node.parent
 
     def mcts(self, board, players):
-        leaf = Node(board, players)
-
-        time_remaining = MCTS_ITERS
+        root = Node(board, players)
+        leaf = root
         
-        while (time_remaining := time_remaining - 1) > 0:
+        for _ in range(MCTS_ITERS):
             # leaf <-- select(tree)
-            # while not leaf.is_terminal() and len(leaf.untried_actions) == 0:
-            #     # Select the best child node based on UCB
-            #     leaf = leaf.best_child(1.0)
-            # child = leaf.best_child(1.0)
-            if len(leaf.untried_actions) == 0:
-                leaf = leaf.best_child(1.0)
-            # child <-- expand(leaf)
-            if not leaf.is_terminal():
-                leaf = leaf.add_child()
+            #     Note that this also expands the tree when it finds a node that is not fully expanded
+            leaf = leaf.select()
             # result <-- simulate(child)
             result = leaf.simulate()
             # backpropagate(result, child)
             self.backpropagate(result, leaf)
 
+        print("Tree after MCTS:")
+        root.print_tree()
+
         # return the move (action) in Actions(state) whose node has highest number of playouts (visits)
-        return max(leaf.children, key=lambda child: child.visits).action_taken
+        return root.best_child(0).action_taken
     
     def play_turn(self, board, players, simulate=False):
         # Copy the board and players to avoid modifying the original state
@@ -205,7 +234,6 @@ class Agent(Player):
 
             # Pick an action from the possible actions
             action = self.pick_option(possible_actions, board, players, simulate)
-            print("here") if len(possible_actions) > 1 else None
             # Perform the action
             action.do_action()
 
@@ -231,6 +259,12 @@ class Agent(Player):
         # She Monte on my Carlo til I Tree Search 
         action = self.mcts(board, players)
         return action
+    
+    def exchange(self, board, r1, r2, amt1, amt2):
+        if self.hand.get(r1, 0) + amt1 < 0:
+            raise ValueError(f"Not enough {consts.ResourceMap[r1]} to perform the exchange. Have {self.hand.get(r1, 0)}, need {amt1}.")
+        self.hand[r1] += amt1
+        self.hand[r2] += amt2
 
     def place_settlement(self, board, first, position=None):
         if position is None:
@@ -372,6 +406,25 @@ class Agent(Player):
             elif purchase['label'] == 'd_card' and len(board.d_cards) > 0:
                 # player = deepcopy(self)
                 list_of_actions.append(Action("buy_dcard", args={"board": board}, function=player.pick_d_card))
+
+        # Get possible exchanges the player can make
+        exchanges = []
+        settlements = [settlement for settlement in board.settlements if settlement.player == player]
+        ports = [consts.Ports.get(settlement.number) for settlement in settlements if consts.Ports.get(settlement.number)]
+        for resource in player.hand:
+            if player.hand[resource] >= 2:
+                if player.has_port(ports, resource):
+                    exchanges.extend([Action("make_exchange", args={"r1": resource, "amt1": -2, "r2": r, "amt2": 1}, function=player.exchange) for r in player.hand])
+                    break
+            if player.hand[resource] >= 3:
+                if self.has_port(ports):
+                    exchanges.extend([Action("make_exchange", args={"r1": resource, "amt1": -3, "r2": r, "amt2": 1}, function=player.exchange) for r in player.hand])
+                    break
+            if player.hand[resource] >= 4:
+                    exchanges.extend([Action("make_exchange", args={"r1": resource, "amt1": -4, "r2": r, "amt2": 1}, function=player.exchange) for r in player.hand])
+        # if there are exchanges to make, add them to the list of actions
+        # if len(exchanges) > 0:
+        #     list_of_actions.extend(exchanges)
 
         # Get possible development cards the player has in their hand to play
         # Note: cards in player.d_cards are valid cards to play (i.e. they were not bought on the current turn)
@@ -534,30 +587,23 @@ class Agent(Player):
             if player_turn == 0:
                 first_turn = False
             winner = utils.get_winner(new_players)
-        # print_screen(screen, new_board, 'Player ' + str(winner.number) + ' Wins!', new_players)
-        # while True:
-        #     event = pygame.event.wait()
-        #     if event.type == pygame.QUIT:
-        #         sys.exit()
         
-        return (new_board, new_player)
+        return new_board, new_player
 
 
     # State 
     def stateActionTransition(self, board, player, players, action: Action):
         
         # If the Action is deterministic (building anything or playing a monopoly, year of plenty, or road builder dcard)
-        if (action.name in ["place_road", "place_city", "place_settlement", "play_monopoly", "play_yop", "play_roadbuilder"]):
+        if (action.name in ["place_road", "place_city", "place_settlement", "play_monopoly", "play_yop", "play_roadbuilder", "make_exchange"]):
             # Assuming that State is a combination of player (including recources and d_cards) and board objects,
             # buildSuccessorState will take the action and update these two objects and return the resulting objects
-            # TODO: Implement buildSuccessorState
             board, player = self.buildSuccessorState(board, player, action)
             return board, player
         
         elif (action.name == "buy_dcard"):
             # get all cards in the dcard list for the board
             available_dcards = board.d_cards
-            total_dcards = len(available_dcards)
 
             num_cards = {
                 # "Knight": 0,
@@ -584,11 +630,6 @@ class Agent(Player):
             player.d_card_queue.append(sampled_card)
             return board, player
 
-
-        # elif action.name == "play_knight":
-        #     # TODO: IMPLEMENT ROBBER STATE ACTION TRANSITION
-        #     return board, player
-
         elif action.name == "end_turn":
             # For end turn, we have to consider the next state stochastically because of the options of other players.
             # We will handle next state by doing a "black box" sample from the environment's state transition function.
@@ -598,8 +639,10 @@ class Agent(Player):
             # empty list that will be populated with board states to sample from 
             sample_space = []
             for _ in range(NEXT_PLAYER_SIM_ITERS):
-                # TODO: Implement stateTransition_simulation
                 sample_space.append(self.stateTransitionSimulation(board, player, players))
 
             # Return the sample
             return random.choice(sample_space)
+        
+        else:
+            raise ValueError(f"Action {action.name} does not have a defined state transition function.")

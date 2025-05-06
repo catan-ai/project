@@ -58,7 +58,10 @@ def main():
     pick_settlements(players, board)
     first_turn = True
     winner = None
+    i = 0
     while winner is None:
+        print(f"turn {i}")
+        i += 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()

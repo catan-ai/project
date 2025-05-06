@@ -235,9 +235,9 @@ class Player(object):
     # Check if the player has a port for a given resource
     # TODO: Comment out if we decide to eliminate ports 
     def has_port(self, ports, resource=None):
-        for port in ports:
-            if (resource and port[0] == resource) or (resource is None and port[0] == 'any'):
-                return True
+        # for port in ports:
+        #     if (resource and port[0] == resource) or (resource is None and port[0] == 'any'):
+        #         return True
         return False
 
     # UI interaction for trading resources with other players
