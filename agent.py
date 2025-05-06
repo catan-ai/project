@@ -134,6 +134,10 @@ class Node():
         # Calculate the best other player's points
         max_other = max(calculate_player_points(i+1) for i in range(len(players[1:])))
 
+        # If agent wins, add 10 points
+        if utils.get_winner(players).number == 1:
+            points += 10
+
         # Calculate the difference between the agent's points and the best other player's points
         # Positive value means agent is winning, negative value means agent is losing
         return points - max_other
