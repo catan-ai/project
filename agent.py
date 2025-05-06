@@ -466,7 +466,7 @@ class Agent(Player):
                                         for test_r2 in roads_owned2:
                                             if road2.start == test_r2.start or test_r2.end == road2.end or road2.start == test_r2.end or road2.end == test_r2.start:    
                                                 # player = deepcopy(self)
-                                                card_actions.append(Action("roadbuilder", args={"card": card, "settle1": road1, "settle2": road2, "pos1": road1, "pos2": road2}, function=player.play_roadbuilder))
+                                                card_actions.append(Action("play_roadbuilder", args={"card": card, "settle1": road1, "settle2": road2, "pos1": road1, "pos2": road2}, function=player.play_roadbuilder))
 
 
             # Year Of Plenty card lets you get any 2 resources for free
