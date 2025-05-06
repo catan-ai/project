@@ -26,8 +26,17 @@ uv run game.py --disable-ports
 ```
 
 ## Implementation Overview 
+### Game Modifications & Assumptions 
+To reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:
+
+* Removed player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank exchanges
+* Removed ports, limiting favorable trade ratios thereby reducing strategic flexibility
+* Removed knights, eliminating the robber mechanic (i.e., no consequence for rolling a 7) and the largest army bonus
+* Assumed the AI agent plays against three random opponents, as defined in the original `pygame` implementation, and plays first
+* Place the first two roads and settlements randomly among valid options (i.e., stochastic initial moves)
+
 ### State Space 
-We broke down our state space into three main sections–Player, Board, and Action–described below: 
+Based on the [Pygame](https://github.com/damargulis/catan/tree/master) implementation of Catan, we broke our state space into three main sections–Player, Board, and Action–described below: 
 
 1. **Player**
     * **Hand**: Dictionary containing each card type (keys) and the associated counts (values)
@@ -46,40 +55,57 @@ We broke down our state space into three main sections–Player, Board, and Acti
     * **Function**: A function that is called when `do_action()` is called on the action
     * **Arguments**: A dictionary of arguments that are passed to the function when `do_action()` is called. `player` and `board` are common arguments to most of the action functions
 
-### Game Modifications & Assumptions 
-To reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:
-
-* Removed player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank exchanges
-* Removed ports, limiting favorable trade ratios thereby reducing strategic flexibility
-* Removed knights, eliminating the robber mechanic (i.e., no consequence for rolling a 7) and the largest army bonus
-* Assumed the AI agent plays against three random opponents, as defined in the `Pygame` implementation
-* Place the first two roads and settlements randomly among valid options (i.e., stochastic initial moves)
-
-### State-Action Space Implementation
-Monte Carlo Tree search needs two functions to fully represent the State-Action space: `GetActions()` and `StateActionTransition()`.
+### State-Action Space
+Monte Carlo Tree Search requires two functions to fully represent the State-Action space `GetActions()` and `StateActionTransition()`.
 
 1. **GetActions**: GetActions will take in a state and return a list of possible actions that can be taken from the current state.
-    * To write this, we needed to enumerate all possible actions given the agent's current development cards and resources, and the boards current state in terms of where roads and settlements are placed. 
+    * To write this, we needed to enumerate all possible actions given the agent's current development cards and resources, and the board's current state in terms of where roads and settlements are placed. 
     * The available actions that get enumerated are as follows:
         * If the agent has enough resources, place road at any valid position
         * If the agent has enough resources, place settlement at any valid position
         * If the agent has enough resources, upgrade any of their settlements
         * If the agent has enough resources, buy a development card
-        * As long as the development card wasn't bought on the current turn, the agent also is able to plaay 1 development card per turn
+        * As long as the development card wasn't bought on the current turn, the agent also is able to play 1 development card per turn
         * If the agent has enough resources, exchange resources with the bank
         * End turn
 
-    * NOTE: each one of these is not one action, but rather a set of possible actions (ex. place road at any valid position is not one action, but rather an action per valid position)
+::: {.callout-note appearance="simple"}
 
-2. **StateActionTransition**: StateActionTransition will take in an action and a state and give a resulting state. This is basically a getSuccessors function. 
-    * In the case of our 
+## Note
+Each one of these is not one action, but rather a set of possible actions (e.g. place road at any valid position is not one action, but rather an action per valid position)
+
+:::
+
+2. **StateActionTransition**: StateActionTransition will take in an action and a state and give a resulting state. (This is basically a getSuccessors function.)
+    * In the case of Catan, we have both deterministic and stochastic transitions
+    * The deterministic transitions are straightforward. We just need to take the given action from the current state and then return the resulting state. We wrote a helper function called buildSuccessorState that takes in the current board and player state, along with an action, and return the updated board/player state AFTER the action.
+    * The stochastic transitions are less straightforward. A stochastic transition occurs when there are multiple different possible result states from taking an action. Some Monte Carlo Tree Search algorithms will handle stochastic transitions by incorporating chance nodes into their tree. These work similar to how the chance nodes work in an expectimax tree. Instead of this, we opted to choose a sampling based technique where each stochastic transition will be modeled as a deterministic transition where the result state is a sampled state from the possible states. Since enumerating the possible result states with weights from a stochastic transition is extremely hard and time consuming, we instead enumerate a list of states to sample from by playing out the game to the next state x number of times, collect the states in a list, and then sample from the list of length x. 
 
 ### Monte Carlo Tree Search
+To implement the MCTS algorithm, we decomposed it into the following three stages: 
 
+* **Selection & Expansion**
+    * To select which nodes to expand, we generate the possible children for each node, and calculate the Upper Confidence Bound for each of them. We expand the child node with the highest UCB. 
+    * The list of possible children is generated by randomly selecting untried actions and generating children nodes based on those actions. 
+    
+* **Simulation**
+    * To simulate, we randomly select an action from the set of possible actions, and simulate the board and player states that follow from that action being taken.
+    * We simulate until a global depth limit or until there is a winner. 
+
+* **Backpropagation** 
+    * To backpropagate, we traverse back up the tree from the simulated leaf node, updating each node along the path by adding the difference between our agent's Victory Points (with an additional 10 if they win) and the highest Victory Points among the simulated opponents.
+
+### Known Issues (_aka hideous insects 🦟_)
+While we believe most of our implementation is correct, we are aware of some issues:
+
+* It is possible for resources to go into the negative when agents make exchanges with the bank. Currently, the game will throw an error and quit when this is attempted.
+* Sometimes, after the agent attempts to play a development card, an error is thrown.
+* Occasionally, the agent seems to enter a bad state (_aka Bad Place™_) (i.e., poor settlement locations) that causes the game to go through an endless loop of turns with no real progress on gathering VPs. We believe this is partially due to the first settlement and road placements being entirely stochastic.
+
+We believe many of the above issues can be traced to an issue in keeping track of state (board, players) throughout the tree. It is entirely possible there is _just one_ missing `deepcopy()` of a part of our state.
 
 ## References   
-Prior work on AI agents for Catan, particularly those leveraging deep reinforcement learning, includes the following examples:
+Prior work on AI agents for Catan, particularly those leveraging reinforcement learning, includes the following examples:
 
 * [Learning to Play Settlers of Catan with Deep Reinforcement Learning](https://settlers-rl.github.io/) by Henry Charlesworth
 * [QSettlers: Deep Reinforcement Learning for Settlers of Catan](https://akrishna77.github.io/QSettlers/) by Peter McAughan, Arvind Krishnakumar, James Hahn, & Shreeshaa Kulkarni
-

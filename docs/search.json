@@ -1,80 +1,10 @@
 [
   {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
-    "section": "",
-    "text": "About this site"
-  },
-  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "Playing Catan with Monte Carlo Tree Search",
     "section": "",
     "text": "Inspired by our love for the classic board game Settlers of Catan, our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. Faced with a large and complex state space, we set out to build an AI agent capable of making rational, strategic decisions each turn."
-  },
-  {
-    "objectID": "index.html#software-and-hardware-requirements",
-    "href": "index.html#software-and-hardware-requirements",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "",
-    "text": "To run our code, available on GitHub, ensure UV is installed. Then, run:\nuv run game.py --disable-ports"
-  },
-  {
-    "objectID": "index.html#project-motivation",
-    "href": "index.html#project-motivation",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "Project Motivation",
-    "text": "Project Motivation\nInspired by our love for the classic board game Settlers of Catan, our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. Faced with a large and complex state space, we set out to build an AI agent capable of making rational, strategic decisions each turn."
-  },
-  {
-    "objectID": "index.html#implementation-overview",
-    "href": "index.html#implementation-overview",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "Implementation Overview",
-    "text": "Implementation Overview\n\nState Space\nWe broke down our state space into three main sections–Player, Board, and Action–described below:\n\nPlayer\n\nHand: Dictionary containing each card type (keys) and the associated counts (values)\nID and Color: Unique player ID number and their assigned RGB color value\nDevelopment Cards: Queue of development cards held by the player, drawn from the board’s development card. There is also a queue of cards to be added to the hand at the end of the turn (a card can’t be played the same turn it’s received).\nPoints: Number of Victory Points a player has\nSettlements Left, Roads Left, Cities Left: Number of each structure that a player may still build, initialized to 5, 15, and 4, respectively\nLongest Road: Flag set to True if the player currently holds the title; otherwise, False\n\nBoard\n\nTiles: List of the tiles on the board, each tile has a resource associated with it\nPorts: List of ports associated with tiles can be optionally enabled, disabled for our agent\n\nAction\n\nName: Name of the action, which helps identify the action type\nFunction: A function that is called when do_action() is called on the action\nArguments: A dictionary of arguments that are passed to the function when do_action() is called. player and board are common arguments to most of the action functions\n\n\n\n\nGame Modifications & Assumptions\nTo reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:\n\nRemoved player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank exchanges\nRemoved ports, limiting favorable trade ratios thereby reducing strategic flexibility\nRemoved knights, eliminating the robber mechanic (i.e., no consequence for rolling a 7) and the largest army bonus\nAssumed the AI agent plays against three random opponents, as defined in the Pygame implementation\nPlace the first two roads and settlements randomly among valid options (i.e., stochastic initial moves)\n\n\n\nState-Action Space Implementation\nMonte Carlo Tree search needs two functions to fully represent the State-Action space: GetActions() and StateActionTransition().\n\nGetActions: GetActions will take in a state and return a list of possible actions that can be taken from the current state.\n\nTo write this, we needed to enumerate all possible actions given the agent’s current development cards and resources, and the boards current state in terms of where roads and settlements are placed.\nThe available actions that get enumerated are as follows:\n\nIf the agent has enough resources, place road at any valid position\nIf the agent has enough resources, place settlement at any valid position\nIf the agent has enough resources, upgrade any of their settlements\nIf the agent has enough resources, buy a development card\nAs long as the development card wasn’t bought on the current turn, the agent also is able to plaay 1 development card per turn\nIf the agent has enough resources, exchange resources with the bank\nEnd turn\n\nNOTE: each one of these is not one action, but rather a set of possible actions (ex. place road at any valid position is not one action, but rather an action per valid position)\n\nStateActionTransition: StateActionTransition will take in an action and a state and give a resulting state. This is basically a getSuccessors function.\n\nIn the case of our\n\n\n\n\nMonte Carlo Tree Search"
-  },
-  {
-    "objectID": "index.html#results",
-    "href": "index.html#results",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "Results",
-    "text": "Results\n\nModel is kind of bad\nOzzy got nerd sniped\nCool project in theory"
-  },
-  {
-    "objectID": "index.html#references",
-    "href": "index.html#references",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "References",
-    "text": "References\nPrior work on AI agents for Catan, particularly those leveraging deep reinforcement learning, includes the following examples:\n\nLearning to Play Settlers of Catan with Deep Reinforcement Learning by Henry Charlesworth\nQSettlers: Deep Reinforcement Learning for Settlers of Catan by Peter McAughan, Arvind Krishnakumar, James Hahn, & Shreeshaa Kulkarni"
-  },
-  {
-    "objectID": "index.html#setup-instructions",
-    "href": "index.html#setup-instructions",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "Setup Instructions",
-    "text": "Setup Instructions\n\n! - she monte on my carlo til i tree search ! - yo mama ! - the Bad Place™"
-  },
-  {
-    "objectID": "index.html#section",
-    "href": "index.html#section",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "",
-    "text": "Inspired by our love for the classic board game Settlers of Catan, our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. Faced with a large and complex state space, we set out to build an AI agent capable of making rational, strategic decisions each turn."
-  },
-  {
-    "objectID": "index.html#laurens-commentary",
-    "href": "index.html#laurens-commentary",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "Lauren’s commentary:",
-    "text": "Lauren’s commentary:\n&gt;! - she monte on my carlo til i tree search \n&gt;! - yo mama \n&gt;! - the Bad Place™"
-  },
-  {
-    "objectID": "index.html#introduction",
-    "href": "index.html#introduction",
-    "title": "Playing Catan with Monte Carlo Tree Search",
-    "section": "Introduction",
-    "text": "Introduction\nInspired by our love for the classic board game Settlers of Catan, our team decided to create an AI agent to play the game optimally. To win Catan, a player must strategically place settlements and roads, decide when to spend or save precious resources, and accumulate enough Victory Points to end the game in their favor. Faced with a large and complex state space, we set out to build an AI agent capable of making rational, strategic decisions each turn."
   },
   {
     "objectID": "index.html#motivations",
@@ -89,5 +19,19 @@
     "title": "Playing Catan with Monte Carlo Tree Search",
     "section": "Requirements",
     "text": "Requirements\nTo run our code, available on GitHub, ensure UV is installed. Then, run:\nuv run game.py --disable-ports"
+  },
+  {
+    "objectID": "index.html#implementation-overview",
+    "href": "index.html#implementation-overview",
+    "title": "Playing Catan with Monte Carlo Tree Search",
+    "section": "Implementation Overview",
+    "text": "Implementation Overview\n\nState Space\nWe broke down our state space into three main sections–Player, Board, and Action–described below:\n\nPlayer\n\nHand: Dictionary containing each card type (keys) and the associated counts (values)\nID and Color: Unique player ID number and their assigned RGB color value\nDevelopment Cards: Queue of development cards held by the player, drawn from the board’s development card. There is also a queue of cards to be added to the hand at the end of the turn (a card can’t be played the same turn it’s received).\nPoints: Number of Victory Points a player has\nSettlements Left, Roads Left, Cities Left: Number of each structure that a player may still build, initialized to 5, 15, and 4, respectively\nLongest Road: Flag set to True if the player currently holds the title; otherwise, False\n\nBoard\n\nTiles: List of the tiles on the board, each tile has a resource associated with it\nPorts: List of ports associated with tiles can be optionally enabled, disabled for our agent\n\nAction\n\nName: Name of the action, which helps identify the action type\nFunction: A function that is called when do_action() is called on the action\nArguments: A dictionary of arguments that are passed to the function when do_action() is called. player and board are common arguments to most of the action functions\n\n\n\n\nGame Modifications & Assumptions\nTo reduce game complexity and enable efficient agent training, we made the following modifications and assumptions:\n\nRemoved player-to-player trading, so resource acquisition depends solely on dice rolls, building, and bank exchanges\nRemoved ports, limiting favorable trade ratios thereby reducing strategic flexibility\nRemoved knights, eliminating the robber mechanic (i.e., no consequence for rolling a 7) and the largest army bonus\nAssumed the AI agent plays against three random opponents, as defined in the original pygame implementation, and plays first\nPlace the first two roads and settlements randomly among valid options (i.e., stochastic initial moves)\n\n\n\nState-Action Space Implementation\nMonte Carlo Tree Search requires two functions to fully represent the State-Action space GetActions() and StateActionTransition().\n\nGetActions: GetActions will take in a state and return a list of possible actions that can be taken from the current state.\n\nTo write this, we needed to enumerate all possible actions given the agent’s current development cards and resources, and the board’s current state in terms of where roads and settlements are placed.\nThe available actions that get enumerated are as follows:\n\nIf the agent has enough resources, place road at any valid position\nIf the agent has enough resources, place settlement at any valid position\nIf the agent has enough resources, upgrade any of their settlements\nIf the agent has enough resources, buy a development card\nAs long as the development card wasn’t bought on the current turn, the agent also is able to plaay 1 development card per turn\nIf the agent has enough resources, exchange resources with the bank\nEnd turn\n\n\n\n\n\n\n\n\n\nNote\n\n\n\nEach one of these is not one action, but rather a set of possible actions (e.g. place road at any valid position is not one action, but rather an action per valid position)\n\n\n\nStateActionTransition: StateActionTransition will take in an action and a state and give a resulting state. (This is basically a getSuccessors function.)\n\nIn the case of Catan, we have both deterministic and stochastic transitions\nThe deterministic transitions are straightforward. We just need to take the given action from the current state and then return the resulting state. We wrote a helper function called buildSuccessorState that takes in the current board and player state, along with an action, and return the updated board/player state AFTER the action.\nThe stochastic transitions are less straightforward. A stochastic transition occurs when there are multiple different possible result states from taking an action. Some Monte Carlo Tree Search algorithms will handle stochastic transitions by incorporating chance nodes into their tree. These work similar to how the chance nodes work in an expectimax tree. Instead of this, we opted to choose a sampling based technique where each stochastic transition will be modeled as a deterministic transition where the result state is a sampled state from the possible states. Since enumerating the possible result states with weights from a stochastic transition is extremely hard and time confusing, we opted to run\n\n\n\n\nMonte Carlo Tree Search\nTo implement the MCTS algorithm, we decomposed it into the following three stages:\n\nSelect & Expand\n\nTo select which nodes to expand, we generate the possible children for each node, and calculate the Upper Confidence Bound for each of them. We expand the child node with the highest UCB.\nThe list of possible children is generated by randomly selecting untried actions and generating children nodes based on those actions.\n\nSimulate\n\nTo simulate, we randomly select an action from the set of possible actions, and simulate the board and player states that follow from that action being taken.\nWe simulate until a global depth limit or until there is a winner.\n\nBackpropagation\n\nTo backpropagate, we traverse back up the tree from the simulated leaf node, updating each node along the path by adding the difference between our agent’s Victory Points (with an additional 10 if they win) and the highest Victory Points among the simulated opponents.\n\n\n\n\nKnown Issues\nWhile we believe most of our implementation is correct, we are aware of some issues:\n\nIt is possible for resources to go into the negative when agents make exchanges with the bank. Currently, the game will throw an error and quit when this is attempted.\nSometimes after the agent attempts to play a development card, an error is thrown."
+  },
+  {
+    "objectID": "index.html#references",
+    "href": "index.html#references",
+    "title": "Playing Catan with Monte Carlo Tree Search",
+    "section": "References",
+    "text": "References\nPrior work on AI agents for Catan, particularly those leveraging reinforcement learning, includes the following examples:\n\nLearning to Play Settlers of Catan with Deep Reinforcement Learning by Henry Charlesworth\nQSettlers: Deep Reinforcement Learning for Settlers of Catan by Peter McAughan, Arvind Krishnakumar, James Hahn, & Shreeshaa Kulkarni"
   }
 ]

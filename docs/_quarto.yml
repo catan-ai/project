@@ -3,11 +3,9 @@ project:
   output-dir: .
 
 website:
-  title: "Playing Catan with Monte Carlo Tree Search"
+  title: "Catan AI"
   navbar:
-    left:
-      - href: index.qmd
-        text: Home
+    left: []
 
 format:
   html:
