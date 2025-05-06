@@ -119,7 +119,7 @@ def main():
             player = players[player_turn]
             label = 'Player %s\'s Turn' % player.number + ', You Rolled: ' + str(total)
             print_screen(screen, board, label, players)
-        # If other typle of player, do regular turn
+        # If other type of player, do regular turn
         else:
 
             def roll_dice():
@@ -139,7 +139,7 @@ def main():
                 buttons, label = option['action']()
                 if not buttons and label != 'end':
                     buttons, label = get_buttons()
-        player.end_turn()
+            player.end_turn()
         player_turn = (player_turn + 1) % 4
         if player_turn == 0:
             first_turn = False

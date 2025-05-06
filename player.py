@@ -85,9 +85,10 @@ class Player(object):
             return False
 
     # Pick and queue a development card 
-    def pick_d_card(self, board):
+    def pick_d_card(self, board, player=None):
+        player = player if player else self
         card = board.d_cards.pop()
-        self.d_card_queue.append(card)
+        player.d_card_queue.append(card)
         return card
 
     # Take resources from the player, based on the item purchased

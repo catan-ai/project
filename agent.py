@@ -16,6 +16,8 @@ MCTS_ITERS = 10
 SIMULATE_DEPTH = 2
 NEXT_PLAYER_SIM_ITERS = 2
 
+# Note some of the MCTS related code was inspired by https://ai-boson.github.io/mcts/ (mostly once we had an initial version and then had to fix hideous insects)
+
 class Node():
     """A lightweight tree node used only by Agent.mcts()."""
     __slots__ = ("board", "players", "player_turn",
@@ -85,7 +87,6 @@ class Node():
         self.untried_actions.remove(a)
 
         current_player: Agent = self.players[0]
-        print("calling stateActionTransition on action", a)
         next_board, next_player = current_player.stateActionTransition(deepcopy(self.board), deepcopy(current_player), deepcopy(self.players), a)
 
         next_players = deepcopy(self.players)
@@ -182,7 +183,11 @@ class Action():
         self.function = function # function to call when action is taken
         self.args = args # args as a dictionary of arguments to pass to the function
 
-    def do_action(self):
+    def do_action(self, player=None):
+        # If player is not None and not already set in args, set the player in the args
+        if player is not None and "player" not in self.args:
+            self.args["player"] = player
+
         if self.function is not None:
             return self.function(**self.args)
         else:
@@ -214,11 +219,8 @@ class Agent(Player):
             # backpropagate(result, child)
             self.backpropagate(result, leaf)
 
-        print("Tree after MCTS:")
-        root.print_tree()
-
-        # return the move (action) in Actions(state) whose node has highest number of playouts (visits)
-        return root.best_child(0).action_taken
+        # Select the best child of the root node
+        return root.best_child(0.0).action_taken
     
     def play_turn(self, board, players, simulate=False):
         # Copy the board and players to avoid modifying the original state
@@ -235,15 +237,12 @@ class Agent(Player):
             # Pick an action from the possible actions
             action = self.pick_option(possible_actions, board, players, simulate)
             # Perform the action
-            action.do_action()
+            action.do_action(self)
 
             print("\taction", action) if len(possible_actions) > 1 else None
 
             # Replace the player in the players list with the updated player
-            for i, player in enumerate(players):
-                if player.number == self.number:
-                    players[i] = self
-                    break
+            players[self.number - 1] = self
 
         # Return the board and player state after the action
         return board, players
@@ -260,39 +259,42 @@ class Agent(Player):
         action = self.mcts(board, players)
         return action
     
-    def exchange(self, board, r1, r2, amt1, amt2):
-        if self.hand.get(r1, 0) + amt1 < 0:
-            raise ValueError(f"Not enough {consts.ResourceMap[r1]} to perform the exchange. Have {self.hand.get(r1, 0)}, need {amt1}.")
-        self.hand[r1] += amt1
-        self.hand[r2] += amt2
+    def exchange(self, board, r1, r2, amt1, amt2, player=None):
+        player = self if player is None else player
+        if player.hand.get(r1, 0) + amt1 < 0:
+            raise ValueError(f"Not enough {consts.ResourceMap[r1]} to perform the exchange. Have {player.hand.get(r1, 0)}, need {-amt1}.")
+        player.hand[r1] += amt1
+        player.hand[r2] += amt2
 
-    def place_settlement(self, board, first, position=None):
+    def place_settlement(self, board, first, position=None, player=None):
+        player = self if player is None else player
         if position is None:
-            choices = [num for num,pos in consts.SettlementPositions.items() if self.can_place_settlement(board, num, first)]
+            choices = [num for num,pos in consts.SettlementPositions.items() if player.can_place_settlement(board, num, first)]
             choice = random.choice(choices)
         else:
             # Find settlement position and ensure they can place settlement
-            choice = [num for num,pos in consts.SettlementPositions.items() if self.can_place_settlement(board, num, first) and pos == position][0]
+            choice = [num for num,pos in consts.SettlementPositions.items() if player.can_place_settlement(board, num, first) and pos == position][0]
 
         # Create settlement object and add to board
-        settlement = Settlement(self, choice)
+        settlement = Settlement(player, choice)
         board.settlements.append(settlement)
-        self.settlements_left -= 1
-        self.points += 1
+        player.settlements_left -= 1
+        player.points += 1
         return settlement
 
-    def place_road(self, board, settlement=None, position=None):
+    def place_road(self, board, settlement=None, position=None, player=None):
+        player = self if player is None else player
         if position is None:
             choices = []
             for num,pos in consts.RoadMidpoints.items():
                 if pos not in [(road.start, road.end) for road in board.roads ]:
-                        road = Road(self, num)
+                        road = Road(player, num)
                         if settlement:
                             if road.start == settlement.position or road.end == settlement.position:
                                 choices.append(road)
                         else:
 
-                            roads_owned = [r for r in board.roads if r.color == self.color]
+                            roads_owned = [r for r in board.roads if r.color == player.color]
                             for test_r in roads_owned:
                                 if road.start == test_r.start or test_r.end == road.end or road.start == test_r.end or road.end == test_r.start:
                                     choices.append(road)
@@ -304,70 +306,59 @@ class Agent(Player):
             road = position
 
         board.roads.append(road)
-        self.roads_left -= 1
-        if self.roads_left <= 15 - 5:
-            board.check_longest_road(self)
+        player.roads_left -= 1
+        if player.roads_left <= 15 - 5:
+            board.check_longest_road(player)
 
-    def place_city(self, board, settlement=None):        
+    def place_city(self, board, settlement=None, player=None):
+        player = self if player is None else player
         if settlement is None:
             # Find a settlement to upgrade to a city
-            choices = [settlement for settlement in board.settlements if settlement.player == self and settlement.city == False]
+            choices = [settlement for settlement in board.settlements if settlement.player == player and settlement.city == False]
             settlement = random.choice(choices)
         settlement.make_city()
 
-    def play_yop(self, board, resource1, resource2, card):
-        self.play_d_card(card)
+    def play_yop(self, board, resource1, resource2, card, player=None):
+        player = self if player is None else player
+        player.play_d_card(card)
 
-        if resource1 in self.hand:
-            self.hand[resource1] += 1
+        if resource1 in player.hand:
+            player.hand[resource1] += 1
         else:
-            self.hand[resource1] = 1
+            player.hand[resource1] = 1
 
-        if resource2 in self.hand:
-            self.hand[resource2] += 1
+        if resource2 in player.hand:
+            player.hand[resource2] += 1
         else:
-            self.hand[resource2] = 1      
+            player.hand[resource2] = 1      
     
-    def play_monopoly(self, board, players, resourceType, card):
-        self.play_d_card(card)
+    def play_monopoly(self, board, players, resourceType, card, player=None):
+        p = self if player is None else player
+        p.play_d_card(card)
 
         # Collect all resources of a type from other players 
         for player in players:
-            if player != self:
+            if player != p:
                 if resourceType in player.hand and player.hand[resourceType] > 0:
                     amount_to_take = player.hand[resourceType]
-                    self.hand[resourceType] += amount_to_take
+                    p.hand[resourceType] += amount_to_take
                     player.hand[resourceType] = 0
         
-    
-    def play_roadbuilder(self, board, card, settle1, settle2, pos1, pos2):
+    def play_roadbuilder(self, board, card, settle1, settle2, pos1, pos2, player=None):
+        player = self if player is None else player
+
         # Note that pos1 and pos2 are actual Roads, not positions
-        self.play_d_card(card)
+        player.play_d_card(card)
 
         # Allows player to place two free roads 
-        self.place_road(board, settle1, pos1)
-        self.place_road(board, settle2, pos2)
+        player.place_road(board, settle1, pos1)
+        player.place_road(board, settle2, pos2)
             
+    def end_turn(self, player=None):
+        player = self if player is None else player
 
-    def pick_tile_to_block(self, board, tile):
-        num = consts.TilePositions.keys()[-1]
-
-        for other_tile in board.tiles:
-            other_tile.blocked = False
-        tile.blocked = True
-        settlements_blocking = consts.TileSettlementMap[num]
-        players = []
-        for settlement in board.settlements:
-            if settlement.number in settlements_blocking and not settlement.player == self:
-                players.append(settlement.player)
-        players = list(set(players))
-        return sorted(players, key=lambda player: player.number)
-    
-    def end_turn(self):
-        return super().end_turn() # I think we can just do this 
-    
-    def getSuccessors(self, state):
-        return
+        player.d_cards += player.d_card_queue
+        player.d_card_queue = []
 
     # List(Actions) 
     def getPossibleActions(self, board, players):
@@ -423,8 +414,8 @@ class Agent(Player):
             if player.hand[resource] >= 4:
                     exchanges.extend([Action("make_exchange", args={"r1": resource, "amt1": -4, "r2": r, "amt2": 1}, function=player.exchange) for r in player.hand])
         # if there are exchanges to make, add them to the list of actions
-        # if len(exchanges) > 0:
-        #     list_of_actions.extend(exchanges)
+        if len(exchanges) > 0:
+            list_of_actions.extend(exchanges)
 
         # Get possible development cards the player has in their hand to play
         # Note: cards in player.d_cards are valid cards to play (i.e. they were not bought on the current turn)
@@ -488,7 +479,7 @@ class Agent(Player):
         return list_of_actions
     
         
-    def buildSuccessorState(self, board, player, action):
+    def buildSuccessorState(self, board, player, action: Action):
         """
         Take in the current board and player state, along with an action, and return the updated board/player state AFTER the action.
         """
@@ -502,7 +493,7 @@ class Agent(Player):
 
         # print(action.name) if action.name != "end_turn" else None
 
-        action.do_action()  # Will call the function associated with the action 
+        action.do_action(new_player)  # Will call the function associated with the action 
 
         # Return board, player state AFTER the action 
         return new_board, new_player
@@ -511,10 +502,9 @@ class Agent(Player):
         size = consts.SCREEN_SIZE
         screen = pygame.display.set_mode(size)
         new_board = deepcopy(board)
-        new_player = deepcopy(player)
         new_players = deepcopy(players)
 
-        player.end_turn()
+        new_players[0].end_turn()
         player_turn = (player.number + 1) % 4
         dice = Dice()
         first_turn = False
@@ -588,7 +578,7 @@ class Agent(Player):
                 first_turn = False
             winner = utils.get_winner(new_players)
         
-        return new_board, new_player
+        return new_board, new_players[0]
 
 
     # State 
