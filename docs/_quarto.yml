@@ -8,12 +8,11 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - about.qmd
 
 format:
   html:
     theme:
-      - cosmo
+      - minty
       - brand
     css: styles.css
     toc: true
